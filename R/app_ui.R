@@ -6,11 +6,23 @@
 #' @noRd
 app_ui <- function(request) {
   tagList(
-    # Leave this function for adding external resources
+    # Add external resources
     golem_add_external_resources(),
-    # Your application UI logic
+
+    # Application UI
     fluidPage(
-      h1("ShinyAPP.CentinelaPatagonia")
+      titlePanel("Simple Golem Shiny App"),
+
+      sidebarLayout(
+        sidebarPanel(
+          actionButton("btn_counter", "Click me!")
+        ),
+
+        mainPanel(
+          h3("Counter:"),
+          textOutput("counter")
+        )
+      )
     )
   )
 }

@@ -7,3 +7,4 @@ library(httpuv)
 
 shinylive::export(appdir = "R", destdir = "docs")
 
+httpuv::runStaticServer("docs/", port=8008)
