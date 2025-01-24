@@ -4,6 +4,10 @@
 #'     DO NOT REMOVE.
 #' @import shiny
 #' @noRd
+
+library(golem)
+library(shiny)
+
 app_ui <- function(request) {
   tagList(
     # Add external resources
