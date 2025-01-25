@@ -8,28 +8,30 @@
 library(golem)
 library(shiny)
 
-app_ui <- function(request) {
-  tagList(
-    # Add external resources
-    golem_add_external_resources(),
+# LEAVE THIS COMMENTED, otherwise github pages will take this
 
-    # Application UI
-    fluidPage(
-      titlePanel("Simple Golem Shiny App"),
-
-      sidebarLayout(
-        sidebarPanel(
-          actionButton("btn_counter", "Click me!")
-        ),
-
-        mainPanel(
-          h3("Counter:"),
-          textOutput("counter")
-        )
-      )
-    )
-  )
-}
+# app_ui <- function(request) {
+#   tagList(
+#     # Add external resources
+#     golem_add_external_resources(),
+#
+#     # Application UI
+#     fluidPage(
+#       titlePanel("Simple Golem Shiny App"),
+#
+#       sidebarLayout(
+#         sidebarPanel(
+#           actionButton("btn_counter", "Click me!")
+#         ),
+#
+#         mainPanel(
+#           h3("Counter:"),
+#           textOutput("counter")
+#         )
+#       )
+#     )
+#   )
+# }
 
 #' Add external Resources to the Application
 #'
@@ -39,19 +41,19 @@ app_ui <- function(request) {
 #' @import shiny
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
 #' @noRd
-golem_add_external_resources <- function() {
-  add_resource_path(
-    "www",
-    app_sys("app/www")
-  )
-
-  tags$head(
-    favicon(),
-    bundle_resources(
-      path = app_sys("app/www"),
-      app_title = "ShinyAPP.CentinelaPatagonia"
-    )
-    # Add here other external resources
-    # for example, you can add shinyalert::useShinyalert()
-  )
-}
+# golem_add_external_resources <- function() {
+#   add_resource_path(
+#     "www",
+#     app_sys("app/www")
+#   )
+#
+#   tags$head(
+#     favicon(),
+#     bundle_resources(
+#       path = app_sys("app/www"),
+#       app_title = "ShinyAPP.CentinelaPatagonia"
+#     )
+#     # Add here other external resources
+#     # for example, you can add shinyalert::useShinyalert()
+#   )
+# }

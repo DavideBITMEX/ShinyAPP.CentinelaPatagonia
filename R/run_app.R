@@ -11,6 +11,9 @@
 library(shinylive)
 library(httpuv)
 
+
+# LEAVE THIS COMMENTED, otherwise github pages will take this
+
 # run_app <- function(
 #   onStart = NULL,
 #   options = list(),
