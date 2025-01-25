@@ -7,6 +7,10 @@
 #' @export
 #' @importFrom shiny shinyApp
 #' @importFrom golem with_golem_options
+
+library(shinylive)
+library(httpuv)
+
 run_app <- function(
   onStart = NULL,
   options = list(),
