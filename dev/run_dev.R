@@ -11,6 +11,8 @@ golem::detach_all_attached()
 # Document and reload your package
 golem::document_and_reload()
 
+# attachment::att_amend_desc()
+
 # Run the application
 run_app()
 
