@@ -13,6 +13,12 @@ golem::document_and_reload()
 
 # attachment::att_amend_desc()
 
+# sometimes re launch this, just to get the latest version
+# Install the remotes package if you haven't already
+# install.packages("remotes")
+# Install tablerDash from GitHub
+# remotes::install_github("RinteRface/tablerDash")
+
 # Run the application
 run_app()
 

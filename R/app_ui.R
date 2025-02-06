@@ -7,87 +7,75 @@
 
 library(golem)
 library(shiny)
+# devtools::install_github("RinteRface/tablerDash")
+library(tablerDash)
 library(bs4Dash)
+library(bslib)
 
 
 app_ui <- function(request) {
-  bs4DashPage(
-    dark = FALSE,
-    title = "Centinela Patagonia Dashboard",
+  tagList(
+    # External resources (CSS, JS, etc.)
+    golem_add_external_resources(),
 
-    # Header with logo
-    header = bs4DashNavbar(
-      skin = "dark",
-      title = bs4DashBrand(
-        title = img(src = "Logo.png", height = "40px"), # Logo added to the header
-        color = "primary"
-      ),
-      status = "primary",
-      border = TRUE
-    ),
-
-    # No sidebar
-    sidebar = bs4DashSidebar(disable = TRUE),
-
-    # Full-width body using `fluidPage`
-    body = bs4DashBody(
-      fluidPage(  # Explicitly use fluidPage for full-width layout
-        fluidRow(
-          # Left column
-          column(
-            width = 10,
-            selectInput(
-              inputId = "campaign_selector",
-              label = "Select Year",
-              choices = c("2023", "2024"),
-              selected = "2024"
-            ),
-            mod_map_2024_ui("map_2024_1")
-          ),
-          column(
-            width = 2,
-            selectInput(
-              inputId = "trial",
-              label = "trial",
-              choices = c("2023", "2024"),
-              selected = "2024"
-          )
-          )
-          ),
-
-        hr(),
-
-        fluidRow(
-          # Right column with tabs
-          column(
-            width = 12,
-            bs4TabCard(
-              width = 12,
-              id = "tabs",
-              side = "left",  # Tab navigation on the left
-              # Tab 1: Noise
-              tabPanel(
-                title = "Noise",
-                active = TRUE,
-                mod_2024_ui("2024_1")  # Dynamically include the plots via the module
-              ),
-              # Tab 2: Placeholder for now
-              tabPanel(title = "Tab2", "Content for Tab2"),
-              # Tab 3: Placeholder for now
-              tabPanel(title = "Tab3", "Content for Tab3")
-            )
-          )
-
-        )
-      )
-    ),
-
-    # Footer
-    footer = bs4DashFooter(
-      left = "Centinela Patagonia © 2025",
-      right = "Powered by bs4Dash"
+    tags$div(
+      style = "background-color: #007bff; color: white; padding: -10px; text-align: center;
+           font-size: 24px; font-weight: bold; height: 100px;",
+      tags$img(src = "www/Centinela_logo.png", style = "height: 110px;")
     )
-  )
+    ,
+
+    bs4DashPage(
+      fullscreen = TRUE,
+      ########################
+      ### Dashboard Header ###
+      ########################
+      header = bs4DashNavbar(
+        title = NULL,  # No title
+        skin = "primary", # Navbar theme
+        border = TRUE,
+        # Flexbox row in the header to combine selectInput and tabs
+        tags$div(
+          style = "display: flex; align-items: center; gap: 15px;",
+          # SelectInput
+          tags$div(
+            style = "display: flex; align-items: center; gap: 10px;",
+            tags$span("Choose Year:", style = "color: white; font-weight: bold;"), # Label
+            tags$div( style = "margin-top: 15px;",
+              selectInput(
+                inputId = "year",
+                label = NULL,
+                choices = c("2023", "2024"),
+                selected = "2024",
+                width = "120px"
+              )
+            )
+          ),
+          # Tabs
+          tags$div(
+            style = "display: flex; gap: 15px;",
+            actionLink(inputId = "tab1", "Noise Overview", class = "nav-link", style = "color: white; text-decoration: none;"),
+            actionLink(inputId = "tab2", "Day/Night Analysis", class = "nav-link", style = "color: white; text-decoration: none;"),
+            actionLink(inputId = "tab3", "Types of sounds", class = "nav-link", style = "color: white; text-decoration: none;")
+          )
+        )
+      ),
+
+      ########################
+      ### Dashboard Sidebar ##
+      ########################
+      sidebar = bs4DashSidebar(disable = TRUE), # Disable sidebar for simplicity
+
+
+
+      ########################
+      #### Dashboard Body ###
+      ########################
+      body = bs4DashBody(
+        uiOutput("dynamic_content")
+      )
+    )
+)
 }
 
 #' Add external Resources to the Application
@@ -111,6 +99,7 @@ golem_add_external_resources <- function() {
       app_title = "ShinyAPP.CentinelaPatagonia"
     )
     # Add here other external resources
-    # for example, you can add shinyalert::useShinyalert()
+    # For example, you can add shinyalert::useShinyalert()
   )
 }
+

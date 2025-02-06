@@ -144,7 +144,6 @@ library(dplyr)
 #    - Take the max value of 'noisePeak per minute (per Octave band), so we have a smaller dataset (but still with the info we need)
 # 4. Remove first and last 30 minutes (to ensure we don't get any sounds from our boat deploying/retrieving the soundtrap)
 # 5. Save data into .RData file (R Environment), so next time we can directly just load it
-# 6. Save the data as .csv (for the app)
 {
   ### 1.
       Quemchi2024_NoiseBand <- rbind(Nov5, Nov6, Nov7, Nov8, Nov9)
@@ -199,8 +198,6 @@ library(dplyr)
            "Quemchi2024_NoiseBand",
             "Quemchi2024_NoiseBand_final",
            file = "R/Environment.RData")
-  ### 6.
-      write.csv(Quemchi2024_NoiseBand_final, "inst/app/www/Quemchi2024_NoiseBand_final.csv", row.names = FALSE)
 
 
 }
