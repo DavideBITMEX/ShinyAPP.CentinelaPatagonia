@@ -8,6 +8,8 @@
 library(dplyr)
 library(highcharter)
 library(purrr)
+library(ggplot2)
+
 
 boxplotNoise <- function(data) {
   # Compute the summary statistics by octaveBand:
@@ -36,8 +38,12 @@ boxplotNoise <- function(data) {
     hc_chart(type = "boxplot") %>%
     hc_title(text = "Noise SPL Distribution by Octave Band") %>%
     hc_xAxis(
-      categories = data_box$octaveBand,
-      title = list(text = "Octave Band")
+      categories = c("20", "25", "31.5", "40", "50", "63", "80", "100",
+                     "125", "160", "200", "250", "315", "400", "500", "630",
+                     "800", "1000", "1250", "1600", "2000", "2500", "3150",
+                     "4000", "5000", "6300", "8000", "10000"),# data_box$octaveBand,
+      title = list(text = "Frequency Band (Hz)"),
+      axis.text.x = element_text(angle = 45, hjust = 1)
     ) %>%
     hc_yAxis(
       title = list(text = "Noise SPL (dB re 1 µPa)")
@@ -55,11 +61,11 @@ boxplotNoise <- function(data) {
     hc_tooltip(
       headerFormat = "<em>Octave Band: {point.key}</em><br/>",
       pointFormat = paste(
-        "Min: {point.low}<br>",
-        "Q1: {point.q1}<br>",
-        "Median: {point.median}<br>",
+        "Max: {point.high}",
         "Q3: {point.q3}<br>",
-        "Max: {point.high}"
+        "Median: {point.median}<br>",
+        "Q1: {point.q1}<br>",
+        "Min: {point.low}<br>"
       )
     )
 }

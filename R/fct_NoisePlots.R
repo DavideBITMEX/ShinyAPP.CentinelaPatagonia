@@ -8,94 +8,93 @@ library(dplyr)
 # title
 # y_axis_title
 
-generate_noise_plot <- function(data, variable, title, y_axis_title) {
-  # Ensure POSIXct `date` is converted to milliseconds
-  data <- data %>%
-    mutate(
-      date_Local = (as.numeric(date_Local) * 1000) - 10800000,  # Convert to milliseconds with offset
-      octaveBand = as.factor(octaveBand)  # Ensure octaveBand is a factor
-    )
-
-  # Frequency ranges for each octave band
-  frequency_ranges <- c(
-    "44.2–88.4 Hz", "88.4–176.8 Hz",
-    "176.8–353.6 Hz", "353.6–707 Hz", "707–1414 Hz",
-    "1414–2828 Hz", "2828–5657 Hz", "5656-11310 Hz"
-  )
-
-  # Combine octave band and frequency range for legend labels
-  legend_labels <- paste(levels(data$octaveBand), " (", frequency_ranges, ")")
-
-  # Create the Highcharter plot
-  plot <- highchart(type = "stock") %>%
-    hc_title(text = title) %>%
-    hc_xAxis(
-      title = list(text = "Date"),
-      type = "datetime",  # Properly format x-axis as dates
-      labels = list(format = "{value:%Y-%m-%d}")  # Display readable dates
-    ) %>%
-    hc_yAxis(title = list(text = y_axis_title)) %>%
-    hc_legend(
-      enabled = TRUE,  # Ensure the legend is visible
-      title = list(text = "Octave Bands"),
-      floating = TRUE,         # Enable floating to overlay the plot
-      align = "left",   # Place the legend to the right of the plot
-      verticalAlign = "top", # Vertically center the legend
-      layout = "vertical", # Arrange the legend items vertically
-      labelFormatter = JS(
-        paste0(
-          "function() {",
-          "var labels = ['", paste(legend_labels, collapse = "','"), "'];",
-          "return labels[this.index];",
-          "}"
-        )
-      )
-    ) %>%
-    hc_tooltip(
-      pointFormat = paste0(
-        "<b>Octave Band: {series.name}</b><br>", y_axis_title, ": {point.y}"
-      )
-    ) %>%
-    hc_plotOptions(
-      series = list(
-        dataGrouping = list(enabled = FALSE),  # Disable data grouping
-        visible = FALSE,  # Hide all series by default
-        type = "line"  # Set series type to line
-      )
-    )
-
-  # Dynamically add series for each octave band
-  for (i in seq_along(levels(data$octaveBand))) {
-    series_data <- data %>%
-      filter(octaveBand == levels(data$octaveBand)[i]) %>%
-      select(date_Local, all_of(variable)) %>%
-      as.data.frame()
-
-    # Check if the series_data is non-empty
-    if (nrow(series_data) > 0) {
-      plot <- plot %>%
-        hc_add_series(
-          data = list_parse2(series_data),  # Convert data to the required format
-          type = "line",
-          name = paste0(levels(data$octaveBand)[i], " (", frequency_ranges[i], ")"),
-          visible = (i == 1)  # Make only the first series visible
-        )
-    }
-  }
-
-  # Add chart zoom and range selector
-  plot <- plot %>%
-    hc_chart(zoomType = "x") %>%
-    hc_rangeSelector(
-      enabled = TRUE,  # Enable the range selector
-      buttons = list(),  # No buttons, so only the date selector remains
-      inputEnabled = TRUE,  # Keep the date selector visible
-      inputDateFormat = "%Y-%m-%d %H:%M:%S",  # Set the input date format
-      inputEditDateFormat = "%Y-%m-%d %H:%M:%S"  # Format for editing dates
-    )
-
-  return(plot)
-}
+# generate_noise_plot <- function(data, variable, title, y_axis_title) {
+#   # Ensure POSIXct `date` is converted to milliseconds
+#   data <- data %>%
+#     mutate(
+#       date_Local = (as.numeric(date_Local) * 1000) - 10800000,  # Convert to milliseconds with offset
+#       octaveBand = as.factor(octaveBand)  # Ensure octaveBand is a factor
+#     )
+#
+#   # Frequency ranges for each octave band
+#   frequency_ranges <- c("20 Hz", "25 Hz", "31.5 Hz", "40 Hz", "50 Hz", "63 Hz", "80 Hz", "100 Hz",
+#                         "125 Hz", "160 Hz", "200 Hz", "250 Hz", "315 Hz", "400 Hz", "500 Hz", "630 Hz",
+#                         "800 Hz", "1 kHz", "1.25 kHz", "1.6 kHz", "2 kHz", "2.5 kHz", "3.15 kHz",
+#                         "4 kHz", "5 kHz", "6.3 kHz", "8 kHz", "10 kHz")
+#
+#   # Combine octave band and frequency range for legend labels
+#   legend_labels <- paste(levels(data$octaveBand), " (", frequency_ranges, ")")
+#
+#   # Create the Highcharter plot
+#   plot <- highchart(type = "stock") %>%
+#     hc_title(text = title) %>%
+#     hc_xAxis(
+#       title = list(text = "Date"),
+#       type = "datetime",  # Properly format x-axis as dates
+#       labels = list(format = "{value:%Y-%m-%d}")  # Display readable dates
+#     ) %>%
+#     hc_yAxis(title = list(text = y_axis_title)) %>%
+#     hc_legend(
+#       enabled = TRUE,  # Ensure the legend is visible
+#       title = list(text = "Octave Bands"),
+#       floating = TRUE,         # Enable floating to overlay the plot
+#       align = "left",   # Place the legend to the right of the plot
+#       verticalAlign = "top", # Vertically center the legend
+#       layout = "vertical", # Arrange the legend items vertically
+#       labelFormatter = JS(
+#         paste0(
+#           "function() {",
+#           "var labels = ['", paste(legend_labels, collapse = "','"), "'];",
+#           "return labels[this.index];",
+#           "}"
+#         )
+#       )
+#     ) %>%
+#     hc_tooltip(
+#       pointFormat = paste0(
+#         "<b>Octave Band: {series.name}</b><br>", y_axis_title, ": {point.y}"
+#       )
+#     ) %>%
+#     hc_plotOptions(
+#       series = list(
+#         dataGrouping = list(enabled = FALSE),  # Disable data grouping
+#         visible = FALSE,  # Hide all series by default
+#         type = "line"  # Set series type to line
+#       )
+#     )
+#
+#   # Dynamically add series for each octave band
+#   for (i in seq_along(levels(data$octaveBand))) {
+#     series_data <- data %>%
+#       filter(octaveBand == levels(data$octaveBand)[i]) %>%
+#       select(date_Local, all_of(variable)) %>%
+#       as.data.frame()
+#
+#     # Check if the series_data is non-empty
+#     if (nrow(series_data) > 0) {
+#       plot <- plot %>%
+#         hc_add_series(
+#           data = list_parse2(series_data),  # Convert data to the required format
+#           type = "line",
+#           name = paste0(levels(data$octaveBand)[i], " (", frequency_ranges[i], ")"),
+#           visible = (i == 1)  # Make only the first series visible
+#         )
+#     }
+#   }
+#
+#   # Add chart zoom and range selector
+#   plot <- plot %>%
+#     hc_chart(zoomType = "x") %>%
+#     hc_rangeSelector(
+#       enabled = TRUE,  # Enable the range selector
+#       buttons = list(),  # No buttons, so only the date selector remains
+#       inputEnabled = TRUE,  # Keep the date selector visible
+#       inputDateFormat = "%Y-%m-%d %H:%M:%S",  # Set the input date format
+#       inputEditDateFormat = "%Y-%m-%d %H:%M:%S"  # Format for editing dates
+#     )
+#
+#   return(plot)
+# }
 
 # # Example: Plot noiseMean
 # generate_noise_plot(
@@ -125,11 +124,10 @@ noiseMean_noisePeak_plot <- function(data, N_octaveBand) {
     )
 
   # Frequency ranges for each octave band
-  frequency_ranges <- c(
-    "44.2–88.4 Hz", "88.4–176.8 Hz",
-    "176.8–353.6 Hz", "353.6–707 Hz", "707–1414 Hz",
-    "1414–2828 Hz", "2828–5657 Hz", "5656-11310 Hz"
-  )
+  frequency_ranges <- c("20 Hz", "25 Hz", "31.5 Hz", "40 Hz", "50 Hz", "63 Hz", "80 Hz", "100 Hz",
+                        "125 Hz", "160 Hz", "200 Hz", "250 Hz", "315 Hz", "400 Hz", "500 Hz", "630 Hz",
+                        "800 Hz", "1 kHz", "1.25 kHz", "1.6 kHz", "2 kHz", "2.5 kHz", "3.15 kHz",
+                        "4 kHz", "5 kHz", "6.3 kHz", "8 kHz", "10 kHz")
 
   # Create the Highcharter plot
   plot <- highchart(type = "stock") %>%
@@ -142,7 +140,7 @@ noiseMean_noisePeak_plot <- function(data, N_octaveBand) {
     hc_yAxis(title = list(text = "SPL (dB re 1 µPa)")) %>%
     hc_legend(
       enabled = TRUE,  # Ensure the legend is visible
-      title = list(text = "Octave Bands values"),
+      title = list(text = "1/3 Octave Bands values"),
       floating = TRUE,         # Enable floating to overlay the plot
       align = "left",          # Place the legend on the left
       verticalAlign = "top",   # Place the legend at the top

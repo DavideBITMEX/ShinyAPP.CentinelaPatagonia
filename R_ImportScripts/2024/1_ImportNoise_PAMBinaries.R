@@ -38,6 +38,8 @@ library(dplyr)
   head(Nov5)
   # remove unnecessary data
   rm(NoiseBandData, allData)
+  # check how many bands
+  unique(Nov5$nBands)
 }
 ### 6 Nov
 {
@@ -62,6 +64,8 @@ library(dplyr)
   head(Nov6)
   # remove unnecessary data
   rm(NoiseBandData, allData)
+  # check how many bands
+  unique(Nov6$nBands)
 }
 ### 7 Nov
 {
@@ -86,6 +90,8 @@ library(dplyr)
   head(Nov7)
   # remove unnecessary data
   rm(NoiseBandData, allData)
+  # check how many bands
+  unique(Nov7$nBands)
 }
 ### 8 Nov
 {
@@ -110,6 +116,8 @@ library(dplyr)
   head(Nov8)
   # remove unnecessary data
   rm(NoiseBandData, allData)
+  # check how many bands
+  unique(Nov8$nBands)
 }
 ### 9 Nov
 {
@@ -134,6 +142,8 @@ library(dplyr)
   head(Nov9)
   # remove unnecessary data
   rm(NoiseBandData, allData)
+  # check how many bands
+  unique(Nov9$nBands)
 }
 ######################################################
 
@@ -189,18 +199,17 @@ library(dplyr)
       # if everything works fine, remove unnecessary variables
       rm(removed_observations, removed_dates)
 
-  ### 5.
-      # some cleaning first
-      Quemchi2024_NoiseBand_final <- Quemchi2024_NoiseBand_final_filt
-      rm(Quemchi2024_NoiseBand_final_filt)
-      # save the environment
-      save("Nov5", "Nov6", "Nov7", "Nov8", "Nov9",
-           "Quemchi2024_NoiseBand",
-            "Quemchi2024_NoiseBand_final",
-           file = "R/Environment.RData")
-
-
 }
+
+### 5.
+# some cleaning first
+Quemchi2024_NoiseBand_final <- Quemchi2024_NoiseBand_final_filt
+rm(Quemchi2024_NoiseBand_final_filt)
+# save the environment
+save("Nov5", "Nov6", "Nov7", "Nov8", "Nov9",
+     "Quemchi2024_NoiseBand",
+     "Quemchi2024_NoiseBand_final",
+     file = "R/Environment.RData")
 ######################################################
 
 

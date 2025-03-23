@@ -1,3 +1,5 @@
+### Don't use
+
 ### Noise Mean full data
 # Count the number of values greater than 100
 count_above_100 <- sum(Quemchi2024_NoiseBand$noiseMean > 100, na.rm = TRUE)

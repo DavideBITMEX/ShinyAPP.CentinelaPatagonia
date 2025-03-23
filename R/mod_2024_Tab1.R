@@ -70,13 +70,13 @@ mod_2024_Tab1_ui <- function(id) {
           inputId = ns("N_octaveBand"),
           label = NULL,
           choices = setNames(
-            1:8,
-            c("1 (44.2–88.4 Hz)", "2 (88.4–176.8 Hz)",
-              "3 (176.8–353.6 Hz)", "4 (353.6–707 Hz)",
-              "5 (707–1414 Hz)", "6 (1414–2828 Hz)",
-              "7 (2828–5657 Hz)", "8 (5656-11310 Hz)")
+            1:28,
+            c("20 Hz", "25 Hz", "31.5 Hz", "40 Hz", "50 Hz", "63 Hz", "80 Hz", "100 Hz",
+              "125 Hz", "160 Hz", "200 Hz", "250 Hz", "315 Hz", "400 Hz", "500 Hz", "630 Hz",
+              "800 Hz", "1 kHz", "1.25 kHz", "1.6 kHz", "2 kHz", "2.5 kHz", "3.15 kHz",
+              "4 kHz", "5 kHz", "6.3 kHz", "8 kHz", "10 kHz")
           ),
-          selected = 1,
+          selected = 6,
           width = "200px"  # adjust as needed
           )
         )
@@ -99,18 +99,52 @@ mod_2024_Tab1_server <- function(id){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
 
+    #############################
+    ### Render Leaflet Map ######
+    #############################
+    output$map <- renderLeaflet({
+      leaflet() %>%
+        setView(lng = -73.4743189, lat = -42.1427629, zoom = 12) %>%  # Center on a water location near Chiloé
+        addTiles() %>%  # Default OSM tiles
+        addMarkers(
+          lng = -73.4743189,
+          lat = -42.1427629,
+          popup = "Marker in the water near Chiloé",
+          layerId = ns("chiloe_location")
+        )
+    })
+
+    #######################################
+    ### Actions when clicking on Map ######
+    #######################################
+    observeEvent(input$map_marker_click, {
+      click <- input$map_marker_click
+      # Check if the clicked marker is the one we added (its id is namespaced)
+      if (!is.null(click$id) && click$id == ns("chiloe_location")) {
+        showModal(
+          modalDialog(
+            title = "Marker Clicked",
+            "You clicked on the marker in the water near Chiloé!",
+            easyClose = TRUE
+          )
+        )
+        # You can also trigger other actions here, e.g. update inputs, change plots, etc.
+      }
+    })
+
+
     ############################
     ### Updating Stats Table ###
     ############################
     output$stats_table <- DT::renderDataTable({
       # Define frequency ranges corresponding to each octaveBand value
-      frequency_ranges <- c(
-        "44.2–88.4 Hz", "88.4–176.8 Hz", "176.8–353.6 Hz", "353.6–707 Hz",
-        "707–1414 Hz", "1414–2828 Hz", "2828–5657 Hz", "5656-11310 Hz"
-      )
+      frequency_ranges <- c("20 Hz", "25 Hz", "31.5 Hz", "40 Hz", "50 Hz", "63 Hz", "80 Hz", "100 Hz",
+                            "125 Hz", "160 Hz", "200 Hz", "250 Hz", "315 Hz", "400 Hz", "500 Hz", "630 Hz",
+                            "800 Hz", "1 kHz", "1.25 kHz", "1.6 kHz", "2 kHz", "2.5 kHz", "3.15 kHz",
+                            "4 kHz", "5 kHz", "6.3 kHz", "8 kHz", "10 kHz")
 
       # Compute the summary statistics and add the frequency range to the octaveBand label
-      df <- Quemchi2024_NoiseBand %>%
+      df <- Quemchi2024_NoiseBand_final %>%
         group_by(octaveBand) %>%
         summarise(
           Mean   = round(mean(noiseMean, na.rm = TRUE), 2),
@@ -119,17 +153,17 @@ mod_2024_Tab1_server <- function(id){
         ) %>%
         ungroup() %>%
         mutate(
-          OctaveBand = paste0(octaveBand, " (", frequency_ranges[as.numeric(octaveBand)], ")")
+          Frequency_Band = paste0(octaveBand, " (", frequency_ranges[as.numeric(octaveBand)], ")")
 
         ) %>%
-        select(OctaveBand, Mean, Median, Max)
+        select(Frequency_Band, Mean, Median, Max)
 
       # Create the DT datatable with custom options and header styling
       DT::datatable(
         df,
         rownames = FALSE,
         options = list(
-          dom = 't',           # only show the table body (remove search, pagination)
+          #dom = 't',           # only show the table body (remove search, pagination)
           ordering = FALSE    # disable sorting if not needed
         ),
         caption = htmltools::tags$caption(
@@ -147,7 +181,7 @@ mod_2024_Tab1_server <- function(id){
     ### Updating Stats Boxplot ###
     ##############################
     output$stats_boxplot <- renderHighchart({
-      boxplotNoise(Quemchi2024_NoiseBand)
+      boxplotNoise(Quemchi2024_NoiseBand_final)
     })
 
 

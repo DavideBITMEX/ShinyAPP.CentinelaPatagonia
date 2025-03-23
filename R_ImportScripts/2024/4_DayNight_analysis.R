@@ -291,10 +291,194 @@ library(nlme) # for mixed effect models
 
 
 
+} # old version
+
+### Stat testing
+{
+  library(dplyr)
+
+  summarize_stat_tests_table <- function(data,
+                                         band_col = "octaveBand",
+                                         outcome = "noiseMean",
+                                         group = "Day_Night") {
+
+    # Get unique bands (converted to character to avoid issues with factors)
+    bands <- sort(unique(as.character(data[[band_col]])))
+
+    # Create an empty data frame to store the results
+    results <- data.frame(
+      Band = character(),
+      p_value = numeric(),
+      Significant = numeric(),
+      Louder = character(),
+      stringsAsFactors = FALSE
+    )
+
+    # Loop over each band
+    for(b in bands) {
+      # Filter the data for the current band
+      sub_data <- subset(data, as.character(data[[band_col]]) == b)
+
+      # Perform the Wilcoxon test: compare outcome between groups (e.g., Day vs Night)
+      test_formula <- as.formula(paste(outcome, "~", group))
+      test_res <- wilcox.test(test_formula, data = sub_data)
+
+      p_val <- test_res$p.value
+      sig <- ifelse(p_val < 0.05, 1, 0)
+
+      # Determine which group is louder if significant by comparing medians
+      louder <- ""
+      if(sig == 1) {
+        summ <- sub_data %>%
+          group_by_at(group) %>%
+          summarise(median_val = median(.data[[outcome]], na.rm = TRUE)) %>%
+          ungroup()
+
+        # Assume two groups exist ("Day" and "Night")
+        if(nrow(summ) >= 2 && all(c("Day", "Night") %in% summ[[group]])) {
+          day_med <- summ$median_val[summ[[group]] == "Day"]
+          night_med <- summ$median_val[summ[[group]] == "Night"]
+          louder <- if(day_med > night_med) "Day" else "Night"
+        }
+      }
+
+      # Append the result for this band
+      results <- rbind(
+        results,
+        data.frame(
+          Band = b,
+          p_value = round(p_val, 4),
+          Significant = sig,
+          Louder = louder,
+          stringsAsFactors = FALSE
+        )
+      )
+    }
+
+    return(results)
+  }
+
+  # Example usage:
+  wilcoxon_table <- summarize_stat_tests_table(Quemchi2024_NoiseBand_final)
+  wilcoxon_table <- wilcoxon_table %>%
+    mutate(Band = as.numeric(Band)) %>%
+    arrange(Band)
+
+
+  # You can then print it to the console...
+  print(wilcoxon_table)
+
+  # ...or render it in Shiny with DT:
+  # output$summaryDT <- DT::renderDataTable({
+  #   DT::datatable(wilcoxon_table, options = list(pageLength = 10))
+  # })
+
+
 }
 
+### Mixed-effect model
+{
+  library(nlme)
+  library(dplyr)
+
+  summarize_mixed_models_table <- function(data,
+                                           band_col = "octaveBand",
+                                           outcome = "noiseMean",
+                                           group = "Day_Night") {
+    # Ensure we have a date variable for the random effect:
+    data <- data %>% mutate(day = as.Date(date_Local))
+
+    # Get sorted unique bands (as characters)
+    bands <- sort(unique(as.character(data[[band_col]])))
+
+    # Prepare an empty results data frame
+    results <- data.frame(
+      Band = character(),
+      p_value = numeric(),
+      Significant = numeric(),
+      Louder = character(),
+      p_value_log = numeric(),
+      Significant_log = numeric(),
+      Louder_log = character(),
+      stringsAsFactors = FALSE
+    )
+
+    for(b in bands) {
+      sub_data <- subset(data, as.character(data[[band_col]]) == b)
+      if(nrow(sub_data) < 2) next  # Skip bands with insufficient data
+
+      ### 1. Mixed-Effects Model (Original)
+      model <- lme(as.formula(paste(outcome, "~", group)),
+                   random = ~ 1 | day,
+                   data = sub_data)
+      summ_model <- summary(model)
+      # For a two-level factor, the second row corresponds to the effect of the non-baseline group.
+      if(nrow(summ_model$tTable) < 2) next
+      p_val <- summ_model$tTable[2, "p-value"]
+      estimate <- summ_model$tTable[2, "Value"]
+      sig <- ifelse(p_val < 0.05, 1, 0)
+      louder <- ""
+      # Here we assume that the baseline is "Day" (i.e. Day is the reference)
+      # so a negative estimate means that Night is lower, hence Day is louder;
+      # a positive estimate implies Night is louder.
+      if(sig == 1) {
+        if(estimate < 0) {
+          louder <- "Day"
+        } else if(estimate > 0) {
+          louder <- "Night"
+        }
+      }
+
+      ### 2. Log-Transformed Mixed-Effects Model
+      model_log <- lme(as.formula(paste("log(", outcome, ") ~", group)),
+                       random = ~ 1 | day,
+                       data = sub_data,
+                       method = "REML")
+      summ_model_log <- summary(model_log)
+      p_val_log <- summ_model_log$tTable[2, "p-value"]
+      estimate_log <- summ_model_log$tTable[2, "Value"]
+      sig_log <- ifelse(p_val_log < 0.05, 1, 0)
+      louder_log <- ""
+      if(sig_log == 1) {
+        if(estimate_log < 0) {
+          louder_log <- "Day"
+        } else if(estimate_log > 0) {
+          louder_log <- "Night"
+        }
+      }
+
+      # Append a row to the results table with both sets of model information
+      results <- rbind(
+        results,
+        data.frame(
+          Band = b,
+          p_value = round(p_val, 4),
+          Significant = sig,
+          Louder = louder,
+          p_value_log = round(p_val_log, 4),
+          Significant_log = sig_log,
+          Louder_log = louder_log,
+          stringsAsFactors = FALSE
+        )
+      )
+    }
+
+    return(results)
+  }
+
+  # Example usage:
+  mixedmodel_table <- summarize_mixed_models_table(Quemchi2024_NoiseBand_final)
+
+  mixedmodel_table <- mixedmodel_table %>%
+    mutate(Band = as.numeric(Band)) %>%
+    arrange(Band)
+  print(mixedmodel_table)
 
 
+}
+
+### create the object "significance" with yes/no for the * in the plot
+{}
 
 ######################################################
 ##################### Plots ##########################
@@ -598,10 +782,10 @@ library(nlme) # for mixed effect models
 }
 
 
-# save("Nov5", "Nov6", "Nov7", "Nov8", "Nov9",
-#      "Quemchi2024_NoiseBand",
-#      "Quemchi2024_NoiseBand_final",
-#      file = "R/Environment.RData")
+save("Nov5", "Nov6", "Nov7", "Nov8", "Nov9",
+     "Quemchi2024_NoiseBand",
+     "Quemchi2024_NoiseBand_final",
+     file = "R/Environment.RData")
 
 
 
