@@ -1,5 +1,5 @@
 default:
-  golem_name: ShinyAPP.CentinelaPatagonia
+  golem_name: CentinelaPatagonia
   golem_version: 0.0.0.9000
   app_prod: no
 production:
