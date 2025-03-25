@@ -32,6 +32,12 @@ library(nlme) # for mixed effect models
 
 }
 
+### Save R.Data
+save("Nov5", "Nov6", "Nov7", "Nov8", "Nov9",
+     "Quemchi2024_NoiseBand",
+     "Quemchi2024_NoiseBand_final",
+     file = "R/Environment.RData")
+
 
 
 ######################################################
@@ -71,8 +77,10 @@ library(nlme) # for mixed effect models
           labs(title = "Density Plot of Noise Mean by Day and Night",
                x = "Noise Mean (SPL RMS)", y = "Density")
 
-        # The distributions of noiseMean appear to be NOT Normally Distributed for day and night across different octave bands: many appear
-        # to be right-sweed (right tale), multiple peaks and there are outliers and some heavy tails.
+        # Based on the histograms and density plots across the 28 octave bands, the noiseMean data for both day and night still
+        # do not appear to follow a normal distribution. Many of the bands show right-skewed distributions, multiple peaks
+        # (suggesting possible multimodality), and some heavy tails and outliers. Overall, this indicates that the noiseMean values
+        # remain non-normally distributed across different bands and times of day.
         # ---> NOT NORMALLY DISTRIBUTED
 
   ### 2b. Boxplots and Violin Plots
@@ -83,8 +91,12 @@ library(nlme) # for mixed effect models
           labs(title = "Boxplot of Noise Mean by Day and Night",
                x = "Period", y = "Noise Mean (SPL RMS)")
 
-        # The interquartile ranges (IQRs) (box width) differ between day and night in multiple facets (e.g., period 1, 3, 5).
-        # The length of the whiskers (which indicate the spread of most data points) suggests that night-time variance is often higher than daytime variance in some periods.
+        # From the boxplots across the 28 octave bands, we can see that the interquartile ranges (IQRs) for day vs. night differ
+        # in multiple bands (e.g., 1, 3, 5), indicating that the spread of the data is not consistent across time periods.
+        # In many of these bands, the whiskers (which capture most of the data points) suggest that nighttime measurements often
+        # exhibit greater variance than daytime, although this is not uniform across all bands. We also observe outliers in both day
+        # and night data, highlighting potential extreme values. Overall, these boxplots confirm that noiseMean distributions vary
+        # noticeably between day and night across several octave bands.
 
         # Violin Plot for noiseMean by Day_Night
         ggplot(Quemchi2024_NoiseBand_final, aes(x = Day_Night, y = noiseMean, fill = Day_Night)) +
@@ -93,8 +105,10 @@ library(nlme) # for mixed effect models
           labs(title = "Violin Plot of Noise Mean by Day and Night",
                x = "Period", y = "Noise Mean (SPL RMS)")
 
-        # Violin plots visualize the distribution density and show that in some periods, the night-time noise has wider spread, indicating greater variance.
-        # Some periods (e.g., 4, 5, and possibly 3) show a more uniform spread at night, whereas daytime distributions are tighter.
+        # From these violin plots, we can see that the distribution of noiseMean differs noticeably between day and night across
+        # many of the 28 octave bands. In several bands the nighttime data appears to have a wider spread, indicating greater variance,
+        # whereas in other bands, daytime distributions may be tighter or occasionally show multiple peaks. These patterns highlight
+        # that the variance is not equal between day and night in numerous bands, further confirming unequal variances.
         # ---> UNEQUAL VARIANCES
 
   ### 2c. Time series plot
@@ -122,178 +136,8 @@ library(nlme) # for mixed effect models
 #   a mixed-effects model can help account for non-independence among observations.
 # 3. Model Diagnostic (Mixed-Effect Model)
 # 4. ---> applying log-transformation (can help stabilize variance and improve the normality of residuals)
-{
-  ### 1. Wilcoxon test (tested for each Octave Band)
-        # Null Hypothesis (H₀): The median noiseMean for day and night are equal
-        # Alternative Hypothesis (H₁): The median noiseMean for day and night are different
-        # A p-value < 0.05, you reject the null hypothesis and conclude that there is a statistically significant difference in the median noise levels between day and night
-        # A p-value > 0.05 would indicate insufficient evidence to claim a difference
 
-        ### Octave Band 1
-        data_band1 <- subset(Quemchi2024_NoiseBand_final, octaveBand == "1")
-        # Apply the Wilcoxon rank-sum test to compare noiseMean between day and night
-        wilcox_result1 <- wilcox.test(noiseMean ~ Day_Night, data = data_band1)
-        print(wilcox_result1)
-        # pvalue < 2.2e-16...There is a statistically significant difference in the median noise levels between day and night for Octave Band 1
-        # Is day or night louder (we check the median)? You can also check the boxplots and violin plots
-        data_band1 %>%
-          group_by(Day_Night) %>%
-          summarise(median = median(noiseMean, na.rm = TRUE),
-                    mean   = mean(noiseMean, na.rm = TRUE))
-        # Day is Louder
-
-        ### Octave Band 2
-        data_band2 <- subset(Quemchi2024_NoiseBand_final, octaveBand == "2")
-        # Apply the Wilcoxon rank-sum test to compare noiseMean between day and night
-        wilcox_result2 <- wilcox.test(noiseMean ~ Day_Night, data = data_band2)
-        print(wilcox_result2)
-        # pvalue < 2.2e-16...There is a statistically significant difference in the median noise levels between day and night for Octave Band 2
-        # Is day or night louder (we check the median)? You can also check the boxplots and violin plots
-        data_band2 %>%
-          group_by(Day_Night) %>%
-          summarise(median = median(noiseMean, na.rm = TRUE),
-                    mean   = mean(noiseMean, na.rm = TRUE))
-        # Day is Louder
-
-        ### Octave Band 3
-        data_band3 <- subset(Quemchi2024_NoiseBand_final, octaveBand == "3")
-        # Apply the Wilcoxon rank-sum test to compare noiseMean between day and night
-        wilcox_result3 <- wilcox.test(noiseMean ~ Day_Night, data = data_band3)
-        print(wilcox_result3)
-        # pvalue = 0.0013...There is a statistically significant difference in the median noise levels between day and night for Octave Band 3
-        # Is day or night louder (we check the median)? You can also check the boxplots and violin plots
-        data_band3 %>%
-          group_by(Day_Night) %>%
-          summarise(median = median(noiseMean, na.rm = TRUE),
-                    mean   = mean(noiseMean, na.rm = TRUE))
-        # Day is Louder
-
-        ### Octave Band 4
-        data_band4 <- subset(Quemchi2024_NoiseBand_final, octaveBand == "4")
-        # Apply the Wilcoxon rank-sum test to compare noiseMean between day and night
-        wilcox_result4 <- wilcox.test(noiseMean ~ Day_Night, data = data_band4)
-        print(wilcox_result4)
-        # pvalue = 0.01449...There is a statistically significant difference in the median noise levels between day and night for Octave Band 4
-        # Is day or night louder (we check the median)? You can also check the boxplots and violin plots
-        data_band4 %>%
-          group_by(Day_Night) %>%
-          summarise(median = median(noiseMean, na.rm = TRUE),
-                    mean   = mean(noiseMean, na.rm = TRUE))
-        # Day is Louder
-
-        ### Octave Band 5
-        data_band5 <- subset(Quemchi2024_NoiseBand_final, octaveBand == "5")
-        # Apply the Wilcoxon rank-sum test to compare noiseMean between day and night
-        wilcox_result5 <- wilcox.test(noiseMean ~ Day_Night, data = data_band5)
-        print(wilcox_result5)
-        # pvalue < 2.2e-16...There is a statistically significant difference in the median noise levels between day and night for Octave Band 5
-        # Is day or night louder (we check the median)? You can also check the boxplots and violin plots
-        data_band5 %>%
-          group_by(Day_Night) %>%
-          summarise(median = median(noiseMean, na.rm = TRUE),
-                    mean   = mean(noiseMean, na.rm = TRUE))
-        # Day is Louder
-
-        ### Octave Band 6
-        data_band6 <- subset(Quemchi2024_NoiseBand_final, octaveBand == "6")
-        # Apply the Wilcoxon rank-sum test to compare noiseMean between day and night
-        wilcox_result6 <- wilcox.test(noiseMean ~ Day_Night, data = data_band6)
-        print(wilcox_result6)
-        # pvalue < 2.2e-16...There is a statistically significant difference in the median noise levels between day and night for Octave Band 6
-        # Is day or night louder (we check the median)? You can also check the boxplots and violin plots
-        data_band6 %>%
-          group_by(Day_Night) %>%
-          summarise(median = median(noiseMean, na.rm = TRUE),
-                    mean   = mean(noiseMean, na.rm = TRUE))
-        # Day is Louder
-
-        ### Octave Band 7
-        data_band7 <- subset(Quemchi2024_NoiseBand_final, octaveBand == "7")
-        # Apply the Wilcoxon rank-sum test to compare noiseMean between day and night
-        wilcox_result7 <- wilcox.test(noiseMean ~ Day_Night, data = data_band7)
-        print(wilcox_result7)
-        # pvalue < 2.2e-16...There is a statistically significant difference in the median noise levels between day and night for Octave Band 7
-        # Is day or night louder (we check the median)? You can also check the boxplots and violin plots
-        data_band7 %>%
-          group_by(Day_Night) %>%
-          summarise(median = median(noiseMean, na.rm = TRUE),
-                    mean   = mean(noiseMean, na.rm = TRUE))
-        # Day is Louder
-
-        ### Octave Band 8
-        data_band8 <- subset(Quemchi2024_NoiseBand_final, octaveBand == "8")
-        # Apply the Wilcoxon rank-sum test to compare noiseMean between day and night
-        wilcox_result8 <- wilcox.test(noiseMean ~ Day_Night, data = data_band8)
-        print(wilcox_result8)
-        # pvalue < 2.2e-16...There is a statistically significant difference in the median noise levels between day and night for Octave Band 8
-        # Is day or night louder (we check the median)? You can also check the boxplots and violin plots
-        data_band8 %>%
-          group_by(Day_Night) %>%
-          summarise(median = median(noiseMean, na.rm = TRUE),
-                    mean   = mean(noiseMean, na.rm = TRUE))
-        # Day is Louder
-
-        # ---> Statistically significant difference for every Octave Band, where the louder Data was always during Day Time
-
-  ### 2. Mixed-Effects Model
-        # Ensure you have a variable representing the day (e.g., as Date)
-        Quemchi2024_NoiseBand_final$day <- as.Date(Quemchi2024_NoiseBand_final$date_Local)
-        # Fit a mixed-effects model:
-        # - Fixed effect: Day_Night
-        # - Random effect: day (to account for variability across different days)
-        mixed_model <- lme(noiseMean ~ Day_Night, random = ~ 1 | day, data = Quemchi2024_NoiseBand_final)
-        summary(mixed_model)
-
-        # Results:
-        # Baseline (Day): The average noiseMean is approximately 94.88.
-        # Night Effect: NoiseMean is about 0.67 units lower at night than during the day.
-        # Significance: The difference is highly statistically significant.
-        # Between-Day Variation: There is moderate variability in baseline noise levels across days, as indicated by the random effect.
-
-  ### 3. Model Diagnostic
-        plot(fitted(mixed_model), residuals(mixed_model, type = "normalized"),
-             xlab = "Fitted values",
-             ylab = "Normalized Residuals",
-             main = "Residuals vs. Fitted Values")
-        abline(h = 0, col = "red", lty = 2)
-
-        # Q-Q plot of normalized residuals
-        qqnorm(residuals(mixed_model, type = "normalized"),
-               main = "Q-Q Plot of Normalized Residuals")
-        qqline(residuals(mixed_model, type = "normalized"), col = "red", lty = 2)
-
-        hist(residuals(mixed_model, type = "normalized"),
-             breaks = 30,
-             main = "Histogram of Normalized Residuals",
-             xlab = "Normalized Residuals",
-             col = "lightblue")
-
-  ### 4. Log-transformation
-        # Fit the model by applying the log transformation in the formula
-        mixed_model_log <- lme(log(noiseMean) ~ Day_Night,
-                               random = ~ 1 | day,
-                               data = Quemchi2024_NoiseBand_final,
-                               method = "REML")
-        summary(mixed_model_log)
-
-        # Model Diagnostic
-        # Plot the fitted values vs. normalized residuals
-        plot(fitted(mixed_model_log), residuals(mixed_model_log, type = "normalized"),
-             xlab = "Fitted Values",
-             ylab = "Normalized Residuals",
-             main = "Residuals vs. Fitted Values (Log-Transformed Model)")
-        abline(h = 0, col = "red", lty = 2)
-
-        # Q-Q plot for the normalized residuals
-        qqnorm(residuals(mixed_model_log, type = "normalized"),
-               main = "Q-Q Plot of Normalized Residuals (Log-Transformed Model)")
-        qqline(residuals(mixed_model_log, type = "normalized"), col = "red", lty = 2)
-
-
-
-} # old version
-
-### Stat testing
+### Stat testing (not used for this campaign)
 {
   library(dplyr)
 
@@ -368,15 +212,19 @@ library(nlme) # for mixed effect models
   # You can then print it to the console...
   print(wilcoxon_table)
 
-  # ...or render it in Shiny with DT:
-  # output$summaryDT <- DT::renderDataTable({
-  #   DT::datatable(wilcoxon_table, options = list(pageLength = 10))
-  # })
+  stat_sig_vector <- ifelse(wilcoxon_table$Significant == 1, "yes", "no")
+
+  # Inspect the result
+  stat_sig_vector
+
 
 
 }
 
-### Mixed-effect model
+### Mixed-effect model (use this for this campaign)
+# Measurements are grouped by day (or other repeated measures), meaning observations within the same day may be correlated.
+# By including a random effect for “day,” the mixed‐effects model properly handles this within-group correlation, providing
+# more accurate standard errors and p-values compared to tests that assume all observations are independent (like the Wilcoxon test).
 {
   library(nlme)
   library(dplyr)
@@ -475,10 +323,74 @@ library(nlme) # for mixed effect models
   print(mixedmodel_table)
 
 
+  mixedMod_sig_vector <- ifelse(mixedmodel_table$Significant == 1, "yes", "no")
+  # Inspect the result
+  mixedMod_sig_vector
+  ### or, if you use the log-transformation:
+  # mixedModLog_sig_vector <- ifelse(mixedmodel_table$Significant_log == 1, "yes", "no")
+  # # Inspect the result
+  # mixedModLog_sig_vector
+
 }
 
-### create the object "significance" with yes/no for the * in the plot
-{}
+
+
+#### MODEL DIAGNOSTICS (OPTIONAL)
+### TO DECIDE IF TO USE THE ORIGINAL OR LOG-TRANSFORMATION OF THE MIXED-EFFECT MODEL
+### IN THIS CAMPAIGN I USE THE ORIGINAL (EASIER INTERPRETATION), ALSO BECAUSE THERE'S NO DIFFERENCE WITH THE LOG
+{
+  library(nlme)
+  library(ggplot2)
+
+  # Select a specific band (e.g., band "1") for diagnostics.
+  # You can loop through bands if needed.
+  band_example <- "20"
+  sub_data <- subset(Quemchi2024_NoiseBand_final, as.character(octaveBand) == band_example)
+
+  # Ensure there is a 'day' variable for the random effect.
+  sub_data$day <- as.Date(sub_data$date_Local)
+
+  # Fit the original mixed-effects model
+  model_orig <- lme(noiseMean ~ Day_Night, random = ~1 | day, data = sub_data)
+
+  # Fit the log-transformed mixed-effects model
+  model_log <- lme(log(noiseMean) ~ Day_Night, random = ~1 | day, data = sub_data, method = "REML")
+
+  # Function to create a residual diagnostic plot panel
+  plot_diagnostics <- function(model, title_suffix) {
+    par(mfrow = c(2,2))
+
+    # 1. Residuals vs. Fitted
+    plot(model, resid(., type = "p") ~ fitted(.),
+         main = paste("Residuals vs Fitted -", title_suffix),
+         xlab = "Fitted values", ylab = "Residuals")
+
+    # 2. Normal Q-Q Plot
+    qqnorm(resid(model), main = paste("Normal Q-Q -", title_suffix))
+    qqline(resid(model))
+
+    # 3. Histogram of Residuals
+    hist(resid(model), main = paste("Histogram of Residuals -", title_suffix),
+         xlab = "Residuals", breaks = 10)
+
+    # 4. Scale-Location Plot (to check homoscedasticity)
+    fitted_vals <- fitted(model)
+    sqrt_abs_resid <- sqrt(abs(resid(model)))
+    plot(fitted_vals, sqrt_abs_resid,
+         main = paste("Scale-Location -", title_suffix),
+         xlab = "Fitted values", ylab = "Sqrt(|Residuals|)")
+    abline(h = mean(sqrt_abs_resid, na.rm = TRUE), col = "red")
+  }
+
+  # Plot diagnostics for the original model
+  plot_diagnostics(model_orig, "Original Model")
+
+  # Plot diagnostics for the log-transformed model
+  plot_diagnostics(model_log, "Log-Transformed Model")
+
+}
+
+
 
 ######################################################
 ##################### Plots ##########################
@@ -782,10 +694,6 @@ library(nlme) # for mixed effect models
 }
 
 
-save("Nov5", "Nov6", "Nov7", "Nov8", "Nov9",
-     "Quemchi2024_NoiseBand",
-     "Quemchi2024_NoiseBand_final",
-     file = "R/Environment.RData")
 
 
 

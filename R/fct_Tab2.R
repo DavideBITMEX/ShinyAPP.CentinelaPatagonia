@@ -1,6 +1,6 @@
 #' DayNightBoxPlot
 #'
-#' @description A function to create a highchart boxplot of noise levels by octave band and time of day.
+#' @description A function to create a highchart boxplot of noise levels by frequency bands and time of day, highlighting important frequency bands and significance levels between day and night.
 #'
 #' @return A highchart object.
 #' @noRd
@@ -192,73 +192,199 @@ DayNightBoxPlot <- function(data, signif_vector, CentralFreq, highlight_bands = 
 
 
 
-
-#' DayNightBoxPlotOneBand (NOT IN USE AT THE MOMENT)
+#' single_boxplot
 #'
-#' @description A function to create a highchart boxplot of noise levels by octave band and time of day.
+#' @description A function to create a boxplot of noise levels for a specific frequency band, grouped by day and night.
 #'
 #' @return A highchart object.
 #' @noRd
-DayNightBoxPlotOneBand <- function(data, NoctaveBand, centreFreq) {
-  library(dplyr)
-  library(highcharter)
+single_boxplot <- function(data, selected_band) {
+  # Filter the data for the selected octave band
+  data_filtered <- data %>% filter(octaveBand == selected_band)
 
-  # Filter data for the specified octave band
-  data_filtered <- data %>% filter(octaveBand == NoctaveBand)
-
-  head(data_filtered)
-
+  # If there's no data for the selected band, return a placeholder chart
   if(nrow(data_filtered) == 0) {
-    return(highchart() %>%
-             hc_title(text = paste("No data for octave band", octaveBand)))
+    return(
+      highchart() %>%
+        hc_title(text = "No data available for the selected filters.")
+    )
   }
 
-  # Compute boxplot statistics for noiseMean by Day/Night
-  stats <- data_filtered %>%
+  # Calculate boxplot statistics for each Day_Night group
+  box_stats <- data_filtered %>%
     group_by(Day_Night) %>%
     summarise(
-      ymin   = min(noiseMean, na.rm = TRUE),
-      lower  = quantile(noiseMean, 0.25, na.rm = TRUE),
-      middle = median(noiseMean, na.rm = TRUE),
-      upper  = quantile(noiseMean, 0.75, na.rm = TRUE),
-      ymax   = max(noiseMean, na.rm = TRUE)
+      low  = round(min(noiseMean, na.rm = TRUE), 2),
+      q1   = round(quantile(noiseMean, 0.25, na.rm = TRUE), 2),
+      med  = round(median(noiseMean, na.rm = TRUE), 2),
+      q3   = round(quantile(noiseMean, 0.75, na.rm = TRUE), 2),
+      high = round(max(noiseMean, na.rm = TRUE), 2)
     ) %>%
-    ungroup() %>%
-    arrange(match(Day_Night, c("Day", "Night")))
+    ungroup()
 
-  # Extract the five-number summaries for Day and Night
-  day_box <- as.numeric(stats %>% filter(Day_Night == "Day") %>% select(ymin, lower, middle, upper, ymax))
-  night_box <- as.numeric(stats %>% filter(Day_Night == "Night") %>% select(ymin, lower, middle, upper, ymax))
-
-  # Define colors (using your red and blue scheme)
-  day_color <- adjustcolor("#E31A1C", alpha.f = 0.5)
-  night_color <- adjustcolor("#1F78B4", alpha.f = 0.5)
-
-  # Build the highchart boxplot:
-  hc <- highchart() %>%
+  # Build and return the highchart boxplot
+  highchart() %>%
     hc_chart(type = "boxplot") %>%
-    hc_title(text = paste("Noise Levels for Octave Band", centreFreq, "Hz")) %>%
+    hc_title(text = "NoiseMean by Day/Night") %>%
     hc_xAxis(
-      categories = c("Day", "Night"),
-      title = list(text = NULL),
-      labels = list(style = list(fontWeight = "bold"))
+      categories = as.character(box_stats$Day_Night),
+      title = list(text = "Period"),
+      gridLineWidth = 1,
+      lineColor = "#ccc"
     ) %>%
     hc_yAxis(
-      title = list(text = NULL)
+      title = list(text = "NoiseMean (SPL RMS)"),
+      gridLineDashStyle = "ShortDot"
     ) %>%
     hc_add_series(
-      name = paste(centreFreq, "Hz"),
-      data = list(day_box, night_box)
+      data = box_stats,
+      name = "NoiseMean",
+      showInLegend = FALSE  # Prevents the series from being clickable in the legend
     ) %>%
     hc_plotOptions(boxplot = list(
       stemWidth = 2,
       whiskerLength = "50%",
       lineWidth = 2,
-      medianColor = "black",   # Sets the median line color to red
-      medianWidth = 1
-      )) %>%
-    hc_legend(enabled = FALSE)
+      medianColor = "red",   # Sets the median line color to red
+      medianWidth = 4        # Increases the thickness of the median line
+    )) %>%
+    hc_tooltip(pointFormat =
+                 "<b>Low:</b> {point.low}<br><b>Q1:</b> {point.q1}<br><b>Median:</b> {point.median}<br><b>Q3:</b> {point.q3}<br><b>High:</b> {point.high}"
+    )
+}
+
+
+
+#' single_violinplot
+#'
+#' @description A function to create a Violin plot of noise levels for a specific frequency band, grouped by day and night.
+#'
+#' @return A highchart object.
+#' @noRd
+single_violinplot <- function(data, selected_band) {
+  # Filter the data for the selected octave band
+  data_filtered <- data %>% filter(octaveBand == selected_band)
+
+  # If there's no data for the selected band, return a placeholder chart
+  if(nrow(data_filtered) == 0) {
+    return(
+      highchart() %>%
+        hc_title(text = "No data available for the selected filters.")
+    )
+  }
+
+  # Define categories and their positions
+  categories <- c("Day", "Night")
+  cat_positions <- setNames(0:(length(categories) - 1), categories)
+
+  # Start building the highchart
+  hc <- highchart() %>%
+    hc_chart(type = "area") %>%
+    hc_title(text = "Violin Plot: NoiseMean by Period") %>%
+    hc_xAxis(categories = categories, title = list(text = "Period")) %>%
+    hc_yAxis(title = list(text = "NoiseMean (SPL RMS)"))
+
+  max_violin_width <- 0.3
+
+  # Loop over each category (Day and Night)
+  for(cat in categories) {
+    group_data <- data_filtered[data_filtered$Day_Night == cat, ]
+    if(nrow(group_data) < 2) next  # Skip if insufficient data
+
+    # Calculate density estimates
+    dens <- density(group_data$noiseMean, na.rm = TRUE)
+    scale_factor <- max_violin_width / max(dens$y)
+    offsets <- dens$y * scale_factor
+    x_base <- cat_positions[cat]
+    left_side <- data.frame(x = x_base - offsets, y = dens$x)
+    right_side <- data.frame(x = x_base + offsets, y = dens$x)
+    polygon_points <- rbind(left_side, right_side[order(-right_side$y), ])
+
+    # Add the violin area (density) series
+    hc <- hc %>% hc_add_series(
+      data = highcharter::list_parse2(polygon_points),
+      type = "area",
+      name = paste("Violin", cat),
+      color = "#7cb5ec",
+      fillOpacity = 0.5,
+      lineWidth = 2,
+      showInLegend = FALSE
+    )
+
+    # Calculate summary statistics for markers
+    med_val <- round(median(group_data$noiseMean, na.rm = TRUE), 2)
+    q1 <- round(quantile(group_data$noiseMean, 0.25, na.rm = TRUE), 2)
+    q3 <- round(quantile(group_data$noiseMean, 0.75, na.rm = TRUE), 2)
+
+    # Add a marker for the median
+    median_point <- data.frame(x = x_base, y = med_val)
+    hc <- hc %>% hc_add_series(
+      data = highcharter::list_parse2(median_point),
+      type = "scatter",
+      name = paste("Median", cat),
+      marker = list(symbol = "diamond", radius = 6, fillColor = "red"),
+      color = "red",
+      showInLegend = FALSE
+    )
+
+    # Add markers for the quartiles
+    quartile_points <- data.frame(
+      x = rep(x_base, 2),
+      y = c(q1, q3),
+      name = c("25% Quartile", "75% Quartile")
+    )
+    hc <- hc %>% hc_add_series(
+      data = highcharter::list_parse2(quartile_points),
+      type = "scatter",
+      name = paste("Quartiles", cat),
+      marker = list(symbol = "circle", radius = 5, fillColor = "gray"),
+      color = "gray",
+      tooltip = list(pointFormat = "{point.name}: {point.y:.2f}"),
+      showInLegend = FALSE
+    )
+  }
 
   return(hc)
 }
+
+
+
+#' single_densityplot
+#'
+#' @description A function to create a Density plots of noise levels for a specific frequency band, grouped by day and night.
+#'
+#' @return A highchart object.
+#' @noRd
+single_densityplot <- function(data, selected_band) {
+  # Filter the data for the selected octave band
+  data_filtered <- data %>% filter(octaveBand == selected_band)
+
+  # If no data is available for the selected filters, return a placeholder chart
+  if(nrow(data_filtered) == 0) {
+    return(
+      highchart() %>%
+        hc_title(text = "No data available for the selected filters.")
+    )
+  }
+
+  # Calculate density estimates for Day and Night groups
+  dens_day <- density(data_filtered %>% filter(Day_Night == "Day") %>% pull(noiseMean), na.rm = TRUE)
+  dens_night <- density(data_filtered %>% filter(Day_Night == "Night") %>% pull(noiseMean), na.rm = TRUE)
+
+  # Convert density estimates to series data
+  day_series <- purrr::map2(dens_day$x, dens_day$y, function(x, y) list(x, y))
+  night_series <- purrr::map2(dens_night$x, dens_night$y, function(x, y) list(x, y))
+
+  # Build and return the highchart object
+  highchart() %>%
+    hc_chart(type = "line") %>%
+    hc_title(text = "Density Plot: Distribution of Noise Levels") %>%
+    hc_add_series(name = "Day", data = day_series, type = "line") %>%
+    hc_add_series(name = "Night", data = night_series, type = "line") %>%
+    hc_xAxis(title = list(text = "NoiseMean (SPL RMS)")) %>%
+    hc_yAxis(title = list(text = "Density"))
+}
+
+
+
 
