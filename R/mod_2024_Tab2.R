@@ -358,7 +358,8 @@ mod_2024_Tab2_server <- function(id) {
       DayNightBoxPlot(data,
                       signif_vector = my_signif_vector,
                       CentralFreq = my_CentralFreq,
-                      highlight_bands = c("6", "9"))
+                      highlight_bands = c("6", "9"),
+                      control_dataset = Control_final)
     })
 
 

@@ -1,36 +1,34 @@
 #' DayNightBoxPlot
 #'
-#' @description A function to create a highchart boxplot of noise levels by frequency bands and time of day, highlighting important frequency bands and significance levels between day and night.
+#' @description A function to create a highchart boxplot of noise levels by third octave bands grouped by Day & Night.
+#' Optionally, if a control dataset is provided (without Day_Night), additional boxes for each frequency band are added.
+#' (Used in Tab2, Results section)
 #'
 #' @return A highchart object.
 #' @noRd
-DayNightBoxPlot <- function(data, signif_vector, CentralFreq, highlight_bands = c("6", "9")) {
-  # Load required packages (if not already loaded)
+DayNightBoxPlot <- function(data, signif_vector, CentralFreq, highlight_bands = c("6", "9"),
+                            control_dataset = NULL) {
   library(dplyr)
   library(highcharter)
 
-  # Helper to convert each row of a data.frame to an unnamed list
+  # Helper: convert each row of a data.frame to an unnamed list.
   list_parse_no_names <- function(df) {
-    lapply(seq_len(nrow(df)), function(i) {
-      unname(as.list(df[i, ]))
-    })
+    lapply(seq_len(nrow(df)), function(i) unname(as.list(df[i, ])))
   }
 
-  # Helper to remove names from a vector (for boxplot stats)
+  # Helper: remove names from a vector.
   unname_box_stats <- function(x) unname(x)
 
   ###############################################################
-  # Prepare data and calculate boxplot statistics
+  # Prepare main data and calculate boxplot statistics
   ###############################################################
   unique_bands <- sort(unique(data$octaveBand))
 
-  # Create a factor for the octave bands
   plot_data <- data %>%
     mutate(octaveBandFactor = factor(octaveBand,
                                      levels = unique_bands,
                                      labels = as.character(unique_bands)))
 
-  # Compute boxplot statistics (using noiseMean) for Day and Night
   bp_stats <- plot_data %>%
     group_by(octaveBandFactor, Day_Night) %>%
     summarise(
@@ -42,16 +40,13 @@ DayNightBoxPlot <- function(data, signif_vector, CentralFreq, highlight_bands = 
     ) %>%
     ungroup()
 
-  # Compute maximum noisePeak for each (for Day and Night)
   max_peak <- plot_data %>%
     group_by(octaveBandFactor, Day_Night) %>%
     summarise(max_noisePeak = max(noisePeak, na.rm = TRUE)) %>%
     ungroup()
 
-  # Overall maximum value for scaling
   overallMaxVal <- max(bp_stats$ymax, max_peak$max_noisePeak, na.rm = TRUE)
 
-  # Prepare boxplot series data for "Day"
   bp_day <- bp_stats %>%
     filter(Day_Night == "Day") %>%
     arrange(as.numeric(as.character(octaveBandFactor)))
@@ -60,7 +55,6 @@ DayNightBoxPlot <- function(data, signif_vector, CentralFreq, highlight_bands = 
     mutate(vals = list(unname_box_stats(c(ymin, lower, middle, upper, ymax)))) %>%
     pull(vals)
 
-  # Prepare boxplot series data for "Night"
   bp_night <- bp_stats %>%
     filter(Day_Night == "Night") %>%
     arrange(as.numeric(as.character(octaveBandFactor)))
@@ -69,7 +63,6 @@ DayNightBoxPlot <- function(data, signif_vector, CentralFreq, highlight_bands = 
     mutate(vals = list(unname_box_stats(c(ymin, lower, middle, upper, ymax)))) %>%
     pull(vals)
 
-  # Prepare scatter series data for max noisePeak (Day)
   max_day <- max_peak %>%
     filter(Day_Night == "Day") %>%
     arrange(as.numeric(as.character(octaveBandFactor))) %>%
@@ -77,13 +70,34 @@ DayNightBoxPlot <- function(data, signif_vector, CentralFreq, highlight_bands = 
     select(x, y = max_noisePeak)
   max_day_list <- list_parse_no_names(max_day)
 
-  # Prepare scatter series data for max noisePeak (Night)
   max_night <- max_peak %>%
     filter(Day_Night == "Night") %>%
     arrange(as.numeric(as.character(octaveBandFactor))) %>%
     mutate(x = as.numeric(as.character(octaveBandFactor)) - 1) %>%
     select(x, y = max_noisePeak)
   max_night_list <- list_parse_no_names(max_night)
+
+  ###############################################################
+  # Prepare control dataset (if provided)
+  ###############################################################
+  if (!is.null(control_dataset)) {
+    control_stats <- control_dataset %>%
+      group_by(octaveBand) %>%
+      summarise(
+        ymin   = min(noiseMean, na.rm = TRUE),
+        lower  = quantile(noiseMean, 0.25, na.rm = TRUE),
+        middle = median(noiseMean, na.rm = TRUE),
+        upper  = quantile(noiseMean, 0.75, na.rm = TRUE),
+        ymax   = max(noiseMean, na.rm = TRUE)
+      ) %>%
+      ungroup() %>%
+      arrange(octaveBand)
+    overallMaxVal <- max(overallMaxVal, max(control_stats$ymax, na.rm = TRUE))
+    control_boxplot_data <- control_stats %>%
+      rowwise() %>%
+      mutate(vals = list(unname_box_stats(c(ymin, lower, middle, upper, ymax)))) %>%
+      pull(vals)
+  }
 
   ###############################################################
   # Create plotBands for highlighted octave bands (0-indexed)
@@ -94,20 +108,19 @@ DayNightBoxPlot <- function(data, signif_vector, CentralFreq, highlight_bands = 
   })
 
   ###############################################################
-  # Define colors (with transparency) for Day and Night
+  # Define colors for Day and Night (red and blue)
   ###############################################################
   day_color <- adjustcolor("#E31A1C", alpha.f = 0.5)
   night_color <- adjustcolor("#1F78B4", alpha.f = 0.5)
 
   ###############################################################
-  # Build the Highchart
+  # Build the highchart
   ###############################################################
   hc <- highchart() %>%
-    hc_chart(type = "boxplot") %>%
-    hc_chart(zoomType = "xy") %>%
+    hc_chart(type = "boxplot", zoomType = "xy") %>%
     hc_title(text = "Noise Levels by Third Octave Bands grouped by Day & Night") %>%
     hc_xAxis(
-      categories = CentralFreq,  # Use the input CentralFreq vector
+      categories = CentralFreq,
       title = list(text = "Frequency (Hz)", style = list(fontWeight = "bold")),
       labels = list(style = list(fontWeight = "bold")),
       plotBands = plotBands
@@ -117,7 +130,6 @@ DayNightBoxPlot <- function(data, signif_vector, CentralFreq, highlight_bands = 
       labels = list(style = list(fontWeight = "bold")),
       max = overallMaxVal + 20
     ) %>%
-    # Add boxplot series for "Day"
     hc_add_series(
       name = "Day",
       data = day_boxplot_data,
@@ -125,7 +137,6 @@ DayNightBoxPlot <- function(data, signif_vector, CentralFreq, highlight_bands = 
       color = "#E31A1C",
       fillColor = day_color
     ) %>%
-    # Add boxplot series for "Night"
     hc_add_series(
       name = "Night",
       data = night_boxplot_data,
@@ -133,7 +144,6 @@ DayNightBoxPlot <- function(data, signif_vector, CentralFreq, highlight_bands = 
       color = "#1F78B4",
       fillColor = night_color
     ) %>%
-    # Add scatter series for max noisePeak (Day)
     hc_add_series(
       name = "Max noisePeak (Day)",
       data = max_day_list,
@@ -144,7 +154,6 @@ DayNightBoxPlot <- function(data, signif_vector, CentralFreq, highlight_bands = 
          return 'Max noisePeak: ' + Highcharts.numberFormat(this.y, 2);
       }"))
     ) %>%
-    # Add scatter series for max noisePeak (Night)
     hc_add_series(
       name = "Max noisePeak (Night)",
       data = max_night_list,
@@ -156,11 +165,21 @@ DayNightBoxPlot <- function(data, signif_vector, CentralFreq, highlight_bands = 
       }"))
     )
 
+  # Add control series if provided.
+  if (!is.null(control_dataset)) {
+    hc <- hc %>% hc_add_series(
+      name = "Control Site",
+      data = control_boxplot_data,
+      type = "boxplot",
+      color = "gray",
+      fillColor = adjustcolor("gray", alpha.f = 0.5)
+    )
+  }
+
   ###############################################################
   # Global tooltip formatter using signif_vector from input
   ###############################################################
-  # Manually construct a JS array literal from signif_vector
-  sig_js <- paste0("[", paste(sprintf('"%s"', signif_vector), collapse = ","), "]")
+  sig_js <- paste0('["', paste(signif_vector, collapse = '","'), '"]')
   hc <- hc %>%
     hc_tooltip(
       useHTML = TRUE,
@@ -192,9 +211,11 @@ DayNightBoxPlot <- function(data, signif_vector, CentralFreq, highlight_bands = 
 
 
 
+
 #' single_boxplot
 #'
 #' @description A function to create a boxplot of noise levels for a specific frequency band, grouped by day and night.
+#' (Used in Tab1, Data Exploration section)
 #'
 #' @return A highchart object.
 #' @noRd
@@ -258,6 +279,7 @@ single_boxplot <- function(data, selected_band) {
 #' single_violinplot
 #'
 #' @description A function to create a Violin plot of noise levels for a specific frequency band, grouped by day and night.
+#' (Used in Tab1, Data Exploration section)
 #'
 #' @return A highchart object.
 #' @noRd
@@ -352,6 +374,7 @@ single_violinplot <- function(data, selected_band) {
 #' single_densityplot
 #'
 #' @description A function to create a Density plots of noise levels for a specific frequency band, grouped by day and night.
+#' (Used in Tab1, Data Exploration section)
 #'
 #' @return A highchart object.
 #' @noRd

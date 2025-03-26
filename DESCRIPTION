@@ -18,7 +18,6 @@ Imports:
     golem (>= 0.4.1),
     highcharter,
     htmltools,
-    jsonlite,
     knitr,
     leaflet,
     lubridate,
