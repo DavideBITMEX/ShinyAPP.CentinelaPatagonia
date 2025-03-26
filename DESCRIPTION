@@ -2,7 +2,7 @@ Package: CentinelaPatagonia
 Title: PKG_TITLE
 Version: 0.0.0.9000
 Authors@R: 
-    person("AUTHOR_FIRST", "AUTHOR_LAST", , "AUTHOR@MAIL.COM")
+    person("Davide", "Bittelli", , "davidebittelli@gmail.com")
 Description: PKG_DESC.
 License: What license is it under?
 URL: https://github.com/DavideBITMEX/ShinyAPP.CentinelaPatagonia
