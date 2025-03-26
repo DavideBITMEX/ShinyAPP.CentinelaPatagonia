@@ -22,8 +22,9 @@ golem::fill_desc(
   pkg_name = "CentinelaPatagonia", # The Name of the package containing the App
   pkg_title = "PKG_TITLE", # The Title of the package containing the App
   pkg_description = "PKG_DESC.", # The Description of the package containing the App
-  authors = person(given = "Davide", family = "Bittelli", email = "davidebittelli@gmail.com", role = NULL, comment =
-                    NULL),
+  author_first_name = "Davide", # Your First Name
+  author_last_name = "Bittelli", # Your Last Name
+  author_email = "davidebittelli@gmail.com", # Your Email
   repo_url = NULL, # The URL of the GitHub Repo (optional),
   pkg_version = "0.0.0.9000" # The Version of the package containing the App
 )
