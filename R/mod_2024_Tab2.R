@@ -97,35 +97,49 @@ mod_2024_Tab2_server <- function(id) {
       solidHeader = TRUE,
       width = 12,
       HTML("
-        <p>This analysis examines noise level differences between <strong>day</strong> and <strong>night</strong> using bio-acoustic data from Quemchi (Chiloe, November 2024).</p>
-        <h5>1. Data Preparation</h5>
-        <ul>
-          <li>Data aggregated by minute to balance detail and smooth out noise.</li>
-          <li>Defined 'Day' (06:31 - 20:45) and 'Night' (20:46 - 06:30) using local sunrise/sunset times.</li>
-        </ul>
-        <h5>2. Exploratory Data Analysis (EDA)</h5>
-        <ul>
-          <li><strong>Summary statistics</strong>: Mean, median, standard deviation, min, and max noise levels per period.</li>
-          <li><strong>Visual Inspection</strong>:
+            <p>This analysis examines noise level differences between <strong>day</strong> and <strong>night</strong> using bio-acoustic data from Quemchi (Chiloe, November 2024).</p>
+
+            <h5>1. Data Preparation</h5>
             <ul>
-              <li>Histograms & Density plots for normality checks.</li>
-              <li>Boxplots & Violin plots to assess variance differences.</li>
-              <li>Time series plots for trends over time.</li>
+              <li>Data aggregated by minute to balance detail and smooth out noise.</li>
+              <li>Defined 'Day' (06:31 - 20:45) and 'Night' (20:46 - 06:30) using local sunrise/sunset times.</li>
+              <li>Processed <strong>Control Site</strong> data in the same way. Data was collected in <i>Caleta Alman</i> on the 17th February 2023 from 11:10 until 13:08 (Local time).</li>
             </ul>
-          </li>
-        </ul>
-        <h5>3. Statistical Testing</h5>
-        <ul>
-          <li><strong>Wilcoxon rank-sum test</strong> to compare medians between day and night.</li>
-          <li><strong>Mixed-Effects Model</strong> with:
+
+            <h5>2. Exploratory Data Analysis (EDA)</h5>
             <ul>
-              <li>Fixed effect: Day/Night</li>
-              <li>Random effect: Day (to account for between-day variability)</li>
+              <li><strong>Summary statistics</strong>: Mean, median, standard deviation, min, and max noise levels per period.</li>
+              <li><strong>Visual Inspection</strong>:
+                <ul>
+                  <li>Histograms & Density plots for normality checks.</li>
+                  <li>Boxplots & Violin plots to assess variance differences.</li>
+                  <li>Time series plots for trends over time.</li>
+                </ul>
+              </li>
             </ul>
-          </li>
-          <li>Log-transformation applied to stabilize variance and improve residual normality.</li>
-        </ul>
-      ")
+
+              <h5>3. Loud Event Detection & Hourly Aggregation</h5>
+            <ul>
+              <li>Identified loud events by setting a threshold at the 90th percentile of <em>noisePeak</em> (highest SPL value recorded per each 1 minute interval).</li>
+              <li>Filtered the dataset to keep only these loud events for further inspection.</li>
+              <li>Aggregated loud events by <strong>day</strong> and <strong>hour</strong> to reveal patterns in daily and hourly occurrences.</li>
+              <li>Explored day-to-day variability and overall hourly trends by visualizing the data in grouped bar charts.</li>
+            </ul>
+
+            <h5>4. Statistical Testing</h5>
+            <ul>
+              <li><strong>Wilcoxon rank-sum test</strong> to compare mean values between day and night.</li>
+              <li><strong>Mixed-Effects Model</strong> with:
+                <ul>
+                  <li>Fixed effect: Day/Night</li>
+                  <li>Random effect: Day (to account for between-day variability)</li>
+                </ul>
+              </li>
+              <li>Log-transformation applied to stabilize variance and improve residual normality.</li>
+            </ul>
+
+          ")
+
     )
 
     # --- Step 2: Data Exploration ---
@@ -192,7 +206,25 @@ mod_2024_Tab2_server <- function(id) {
                 highchartOutput(ns("densityPlot"), height = "500px"),
                 htmlOutput(ns("densityCaption"))
               )
+            ),
+
+
+            tabPanel(
+              "Peak Hours",
+              box(
+                title = tagList(icon("chart-area"), "Potential Peak Hours"),
+                status = "primary",
+                solidHeader = TRUE,
+                width = 12,
+                highchartOutput(ns("PeakHoursPlot"), height = "500px"),
+                htmlOutput(ns("PeakHoursCaption")),
+                htmlOutput(ns("L10MetricsTable"))
+              )
             )
+
+
+
+
           )
         )
       )
@@ -221,28 +253,43 @@ mod_2024_Tab2_server <- function(id) {
            </p>
            <hr>"),
       HTML("
-        <h5>Exploratory Data Analysis (EDA)</h5>
-        <ul>
-          <li>Noise distributions are <strong>non-normal</strong> (right-skewed with multiple peaks and heavy tails).</li>
-          <li>Variances differ between day and night – with nighttime showing higher variability.</li>
-        </ul>
-        <h5>Statistical Testing</h5>
-        <ul>
-          <li><strong>Wilcoxon test</strong>: Statistically significant differences (p < 0.05) across all octave bands.</li>
-          <li>Daytime median noise levels are consistently <strong>higher</strong> than nighttime levels.</li>
-        </ul>
-        <h5>Mixed-Effects Model</h5>
-        <ul>
-          <li>Daytime levels are significantly higher (~94.88 dB vs. night ~0.67 dB lower on average).</li>
-          <li>Between-day variation supports the use of a mixed-effects framework.</li>
-        </ul>
-        <h5>Model Diagnostics</h5>
-        <ul>
-          <li>Residuals show slight skewness; log-transformation improves normality.</li>
-          <li>The log-transformed model reaffirms a significant day/night effect.</li>
-        </ul>
-        <p><strong>Conclusion:</strong> Daytime noise levels are consistently higher than nighttime across all octave bands, with robust statistical evidence supporting this finding.</p>
-      ")
+            <h5>Exploratory Data Analysis (EDA)</h5>
+            <ul>
+              <li>Based on the histograms and density plots across the 28 octave bands, the noiseMean data for both day and night does not appear to follow a normal distribution. Many of the bands show right-skewed distributions, multiple peaks (suggesting possible multimodality), and some heavy tails and outliers. Overall, this indicates that the noiseMean values remain non-normally distributed across different bands and times of day. Therefore, noise distributions are <strong>non-normal</strong> (right‐skewed with multiple peaks and heavy tails).</li>
+              <li>Both the boxplots and violin plots for the 28 octave bands reveal differences in the noiseMean distributions between day and night. The boxplots show varying interquartile ranges and whiskers, while the violin plots further highlight that nighttime data often has a wider spread or even multiple peaks compared to daytime. Together, these visualizations indicate that <strong>variances are unequal</strong> between day and night across numerous bands. </li>
+            </ul>
+            <h5>Noise Peaks at certain hours</h5>
+            <ul>
+              <li>The hourly bar chart reveals distinct peaks at certain hours, indicating that loud events are not uniformly distributed throughout the day.</li>
+              <li>The overall total counts provide a clear picture of which hours experience the highest frequency of loud events. For example from 9 AM - 11 AM, around 1 PM, and from 10 PM - 11 PM.</li>
+            </ul>
+            <h5>Statistical Testing</h5>
+            <ul>
+              <li>
+                <strong>Wilcoxon Rank-Sum Test:</strong> Across the 28 octave bands, the Wilcoxon tests yielded p-values < 0.05 in almost all bands, indicating significant differences between day and night.
+              </li>
+            </ul>
+            <h5>Mixed-Effects Model (Non-Log Transformed)</h5>
+            <ul>
+              <li>
+                Accounting for repeated measures by day, the mixed‑effects model showed highly significant differences between day and night for nearly all bands. The model’s estimates indicate that, in most cases, one period is consistently louder than the other; for instance, band 25 Hz and several others show “Day” as louder, whereas bands 20 Hz, 31.5 Hz, and 315 - 630 Hz indicate “Night” as louder. Notably, bands 63 Hz, 100 Hz and 800 Hz did not differ significantly, suggesting similar noise levels across periods in that band.
+              </li>
+              <li>
+                Most frequency bands exhibited higher average noise levels near the salmon farm (during both day and night) compared to the control site. Exceptions include 20 Hz, 25 Hz, 1000 Hz, and 10,000 Hz, where average levels were comparable or lower.
+              </li>
+              <li>
+                These findings confirm that the central tendencies and variances of noise levels differ between day and night and vary by frequency band.
+              </li>
+            </ul>
+            <h5>Model Diagnostics</h5>
+            <ul>
+              <li>
+                Residual analyses revealed slight skewness; however, the overall model fit was robust. A parallel analysis using a log-transformation produced similar significance patterns, affirming that the original model’s conclusions were reliable.
+              </li>
+            </ul>
+            <p><strong>Conclusion:</strong> This analysis confirms that underwater noise levels in Quemchi vary significantly between day and night across most frequency bands. Distributions were non-normal and showed unequal variances, justifying the use of non-parametric and mixed-effects models. Daytime noise was generally louder, though some mid-frequency bands showed the opposite or no difference. Loud events were more frequent at specific times of day, suggesting temporal patterns in acoustic activity. Additionally, noise levels near the salmon farm were typically higher than at the control site, especially in lower and mid frequencies. Overall, both time and location strongly influence the acoustic environment</p>
+          ")
+
     )
 
     ###############################################################
@@ -325,6 +372,11 @@ mod_2024_Tab2_server <- function(id) {
       single_densityplot(data = Quemchi2024_NoiseBand_final, selected_band = input$octaveBandDensity)
     })
 
+    # --- Density Plot ---
+    # output$PeakHoursPlot <- renderHighchart({
+    #   HourlyEventsByDayPlot(Quemchi2024_NoiseBand_final, ma_window = 3)
+    # })
+
 
     # --- Caption below BoxPlot & ViolinPlot --- #
     output$boxviolinCaption <- renderUI({
@@ -339,6 +391,35 @@ mod_2024_Tab2_server <- function(id) {
              Note: The density plot illustrates the distribution of noise levels for both Day and Night.
            </p>")
     })
+
+    # # --- Caption below PeakHoursPlot --- #
+    # output$PeakHoursCaption <- renderUI({
+    #   HTML("<p style='font-style: italic; font-size: 16px; color: #666; margin-top: 10px;'>
+    #          BliBlaBlu
+    #        </p>")
+    # })
+
+    # Compute the enhanced outputs once.
+    loudoutputs <- HourlyEventsByDayPlot(Quemchi2024_NoiseBand_final)
+
+    # --- Peak Plot ---
+    output$PeakHoursPlot <- renderHighchart({
+      loudoutputs$hc
+    })
+
+    # --- Caption below PeakHoursPlot ---
+    output$PeakHoursCaption <- renderUI({
+      HTML("<p style='font-style: italic; font-size: 16px; color: #666; margin-top: 10px;'>
+         BliBlaBlu
+       </p>")
+    })
+
+    # --- L10 Metrics Table ---
+    output$L10MetricsTable <- renderUI({
+      loudoutputs$l10_table
+    })
+
+
 
     ###############################################################
     # Render outputs for the Results section (Random Plots)

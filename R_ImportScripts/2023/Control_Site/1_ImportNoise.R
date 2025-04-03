@@ -1,14 +1,15 @@
-# make sure you have Rtools installed
-if(!require('devtools')) install.packages('devtools')
-# install from GitHub
-devtools::install_github('TaikiSan21/PamBinaries')
 library(PamBinaries)
 library(lubridate)
 library(dplyr)
 
 ################################
 # Import NoiseBand data, 2023
-# Control Area
+# Control Area: Caleta Alaman
+### Log:
+# ~ "11:03 Local time, caleta alaman, deployng ST" can be listend from the recordings
+# 14:03 UTC ST in the water ---> 16:30 UTC ST out of the water (17th February 2023)
+# We use the data from 14:10 UTC until 16:08 UTC for the control dataset
+# within this period there is some anthropogenic noise, probably boats passing by (e.g. from 14:40 UTC until 14:53 UTC)
 ################################
 
 ######################################################
@@ -73,10 +74,11 @@ head(Control_final$date_Local)
 head(Control_final$date_UTC)
 ### 4.
 # Retaing, for example, just 1 hour of recording for control
-# We want data from (Local time) 13:35 5 Nov until 12:25 9 Nov
+# We want data from (Local time) 11:10 until 13:08 9 Nov
 Control_final_filt <- Control_final %>%
-  filter(date_Local >= (with_tz(as.POSIXct("2023-02-17 12:00:00"), tzone = "America/Santiago") + hours(4)) &
-           date_Local <= (with_tz(as.POSIXct("2023-02-17 13:00:00"), tzone = "America/Santiago") + hours(4)))
+  filter(date_Local >= (with_tz(as.POSIXct("2023-02-17 11:10:00"), tzone = "America/Santiago") + hours(4)) &
+           date_Local <= (with_tz(as.POSIXct("2023-02-17 13:08:00"), tzone = "America/Santiago") + hours(4)))
+
 # CHECK IF THE REMOVED OBSERVATIONS ARE CORRECT:
 # Find the removed observations
 removed_observations <- anti_join(Control_final, Control_final_filt, by = c("octaveBand", "date_Local"))
@@ -88,7 +90,7 @@ rm(removed_observations, removed_dates)
 
 
 Control_final <- Control_final_filt
-rm(Control_final_filt)
+rm(Control_final_filt, Control)
 }
 ######################################################
 

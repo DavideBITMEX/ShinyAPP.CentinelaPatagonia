@@ -168,7 +168,7 @@ DayNightBoxPlot <- function(data, signif_vector, CentralFreq, highlight_bands = 
   # Add control series if provided.
   if (!is.null(control_dataset)) {
     hc <- hc %>% hc_add_series(
-      name = "Control Site",
+      name = "Control Site (Day)",
       data = control_boxplot_data,
       type = "boxplot",
       color = "gray",
@@ -195,7 +195,7 @@ DayNightBoxPlot <- function(data, signif_vector, CentralFreq, highlight_bands = 
                       '<b>Median: ' + Highcharts.numberFormat(this.point.median, 2) + '</b><br/>' +
                       'Q3: ' + Highcharts.numberFormat(this.point.q3, 2) + '<br/>' +
                       'Max: ' + Highcharts.numberFormat(this.point.high, 2) + '<br/>' +
-                      '<b>Significant: ' + sigText + '</b>';
+                      '<b>Significant between Day & Night: ' + sigText + '</b>';
            } else if (this.series.type === 'scatter') {
                return 'Max noisePeak: ' + Highcharts.numberFormat(this.point.y, 2);
            } else {
@@ -208,8 +208,6 @@ DayNightBoxPlot <- function(data, signif_vector, CentralFreq, highlight_bands = 
 
   return(hc)
 }
-
-
 
 
 #' single_boxplot
@@ -409,5 +407,161 @@ single_densityplot <- function(data, selected_band) {
 }
 
 
+
+#' HourlyEventsByDayPlot
+#'
+#' @description Creates a highchart bar plot of high noise events (noiseMean above the 90th percentile)
+#' by hour and day. Each day/hour “box” is annotated with the top three frequency bands (with event counts and L10 sound levels).
+#'
+#' Additionally, a table is created that, for each hour (aggregated over all days), displays the top three bands
+#' (with their corresponding L10 metrics) in separate columns.
+#'
+#' @return A list with two elements:
+#'   - hc: A highchart object.
+#'   - l10_table: An HTML object containing the top bands table.
+#' @noRd
+HourlyEventsByDayPlot <- function(data) {
+  library(dplyr)
+  library(lubridate)
+  library(highcharter)
+  library(tidyr)
+
+  # Define threshold for high noise events (90th percentile)
+  threshold <- quantile(data$noiseMean, 0.90, na.rm = TRUE)
+
+  # Define frequency range labels for the 28 octave bands.
+  frequency_ranges <- c("20 Hz", "25 Hz", "31.5 Hz", "40 Hz", "50 Hz", "63 Hz", "80 Hz", "100 Hz",
+                        "125 Hz", "160 Hz", "200 Hz", "250 Hz", "315 Hz", "400 Hz", "500 Hz", "630 Hz",
+                        "800 Hz", "1 kHz", "1.25 kHz", "1.6 kHz", "2 kHz", "2.5 kHz", "3.15 kHz",
+                        "4 kHz", "5 kHz", "6.3 kHz", "8 kHz", "10 kHz")
+
+  # Filter for high events and extract day, hour (in CLST), and map octaveBand to a frequency label.
+  high_events <- data %>%
+    filter(noiseMean > threshold) %>%
+    mutate(
+      day = as.Date(date_Local, tz = "America/Santiago"),
+      hour = hour(with_tz(date_Local, tzone = "America/Santiago")),
+      frequency = frequency_ranges[octaveBand]
+    )
+
+  # --- For the Highchart Plot ---
+  # Aggregate counts by day, hour, and octaveBand; compute L10 for each group.
+  band_agg <- high_events %>%
+    group_by(day, hour, octaveBand, frequency) %>%
+    summarise(
+      event_count = n(),
+      L10 = quantile(noiseMean, 0.90, na.rm = TRUE),
+      .groups = "drop"
+    )
+
+  # Compute overall event count by day and hour (summing over all bands).
+  daily_hourly_total <- high_events %>%
+    group_by(day, hour) %>%
+    summarise(
+      total_count = n(),
+      .groups = "drop"
+    )
+
+  # For each day and hour, identify the top 3 frequency bands and format a descriptive string.
+  top_bands_info <- band_agg %>%
+    group_by(day, hour) %>%
+    arrange(desc(event_count)) %>%
+    slice_head(n = 3) %>%
+    summarise(
+      top_bands = paste0(frequency, " (", event_count, " events, L10: ", round(L10, 1), " dB)", collapse = ", "),
+      .groups = "drop"
+    )
+
+  # Merge the top bands info with the daily/hourly totals.
+  daily_hourly <- left_join(daily_hourly_total, top_bands_info, by = c("day", "hour"))
+
+  # Create one series per day as a list of (x, y) points with additional info for tooltips.
+  series_list <- lapply(unique(daily_hourly$day), function(d) {
+    day_data <- daily_hourly %>% filter(day == d) %>% arrange(hour)
+    data_points <- lapply(seq_len(nrow(day_data)), function(i) {
+      list(
+        x = day_data$hour[i],
+        y = day_data$total_count[i],
+        topBands = day_data$top_bands[i]
+      )
+    })
+    list(name = as.character(d), data = data_points, zIndex = 2)
+  })
+
+  # Compute overall hourly total counts (summing over days).
+  overall_hourly <- daily_hourly %>%
+    group_by(hour) %>%
+    summarise(total_count = sum(total_count), .groups = "drop") %>%
+    arrange(hour)
+
+  # Build the highchart (without the moving average series).
+  hc <- highchart() %>%
+    hc_chart(type = "column") %>%
+    hc_title(text = "High noiseMean Events by Hour (Colored by Day)") %>%
+    hc_yAxis(title = list(text = "Number of High Events")) %>%
+    hc_tooltip(
+      useHTML = TRUE,
+      headerFormat = "",
+      pointFormat = "<b>Hour: {point.x}</b><br>Total Events: {point.y}<br><i>Top Bands:</i> {point.topBands}"
+    )
+
+  # Add overall total series as wider, semi-transparent columns.
+  overall_series <- list(
+    name = "Total Count",
+    data = overall_hourly$total_count,
+    type = "column",
+    grouping = FALSE,       # Centers on each category.
+    pointWidth = 30,        # Wider columns.
+    color = "rgba(0, 0, 0, 0.3)",  # Semi-transparent black.
+    zIndex = 1              # Drawn behind the individual day series.
+  )
+  hc <- hc %>% hc_add_series_list(list(overall_series))
+
+  # Add each day's series on top.
+  hc <- hc %>% hc_add_series_list(series_list)
+
+  # --- For the Top Bands Table (Professional Format) ---
+  # Aggregate data by hour and octaveBand (across all days).
+  hourly_band_agg <- high_events %>%
+    group_by(hour, octaveBand, frequency) %>%
+    summarise(
+      event_count = n(),
+      L10 = round(quantile(noiseMean, 0.90, na.rm = TRUE), 1),
+      .groups = "drop"
+    )
+
+  # For each hour, select the top 3 bands and assign a rank.
+  top_bands_hourly <- hourly_band_agg %>%
+    group_by(hour) %>%
+    arrange(desc(event_count)) %>%
+    mutate(rank = row_number()) %>%
+    filter(rank <= 3) %>%
+    select(hour, frequency, L10, rank) %>%
+    pivot_wider(names_from = rank, values_from = c(frequency, L10))
+
+  # Rename columns for clarity.
+  top_bands_hourly <- top_bands_hourly %>%
+    select(hour, frequency_1, L10_1, frequency_2, L10_2, frequency_3, L10_3) %>%
+    rename(
+      `Hour` = hour,
+      `1st Freq. Band` = frequency_1,
+      `Top Band 1 L10 (dB)` = L10_1,
+      `2nd Freq. Band` = frequency_2,
+      `Top Band 2 L10 (dB)` = L10_2,
+      `3rd Freq. Band` = frequency_3,
+      `Top Band 3 L10 (dB)` = L10_3
+    ) %>%
+    arrange(`Hour`)
+
+  # Wrap table in a div with horizontal and vertical scrolling and format it using knitr::kable.
+  l10_table_html <- HTML(paste0(
+    "<div style='max-height:300px; overflow-y:auto; overflow-x:auto;'>",
+    knitr::kable(top_bands_hourly, format = 'html', table.attr = 'class=\"table table-striped table-hover\"'),
+    "</div>"
+  ))
+
+  # Return a list with the highchart object and the L10 metrics table.
+  return(list(hc = hc, l10_table = l10_table_html))
+}
 
 
