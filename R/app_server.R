@@ -33,6 +33,47 @@ app_server <- function(input, output, session) {
   })
 
 
+  #------------------------------------- WAITER -------------------------------------------- #
+  #----------- Define what to see in the loading animation (when data is loading) ---------- #
+  #------------------------------------- WAITER -------------------------------------------- #
+
+  # adjustcolor("#003878", alpha.f = 0.2) # ----> "#00387833". # MEERESMUSEUM COLOR
+  # adjustcolor("grey", alpha.f = 0.2) # ----> "#BEBEBE33"
+
+  waiting_screen <- tagList(
+    div(
+      style = "
+      background-color: #111184;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.15);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    ",
+      div(
+        tags$img(src = "www/Centinela_logo.png", height = "155px"),
+        style = "margin-bottom: 20px;"
+      ),
+      div(
+        h4("Loading Data...",
+           style = "color: white; margin-bottom: 20px;")
+      ),
+       div(bs4_spinner(style = "spin", color = "light"))
+    )
+  )
+
+  # Show the global loader on app startup
+  waiter::waiter_show(html = waiting_screen, color = "#00387833")
+
+  # This will hide the loader once the UI has been fully flushed to the client
+  session$onFlushed(function() {
+    Sys.sleep(2)  # Wait 3 seconds (note: this blocks R temporarily)
+    waiter::waiter_hide()
+  }, once = TRUE)
+
+
+
   ##########################################
   # Reactive value to track the active tab #
   ##########################################

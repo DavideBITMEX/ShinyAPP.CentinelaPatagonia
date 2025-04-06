@@ -268,7 +268,7 @@ single_boxplot <- function(data, selected_band) {
       medianWidth = 4        # Increases the thickness of the median line
     )) %>%
     hc_tooltip(pointFormat =
-                 "<b>Low:</b> {point.low}<br><b>Q1:</b> {point.q1}<br><b>Median:</b> {point.median}<br><b>Q3:</b> {point.q3}<br><b>High:</b> {point.high}"
+                 "<b>Low:</b> {point.low}<br><b>Q1:</b> {point.q1}<br><b>Median:</b> {point.med}<br><b>Q3:</b> {point.q3}<br><b>High:</b> {point.high}"
     )
 }
 
@@ -314,7 +314,7 @@ single_violinplot <- function(data, selected_band) {
     # Calculate density estimates
     dens <- density(group_data$noiseMean, na.rm = TRUE)
     scale_factor <- max_violin_width / max(dens$y)
-    offsets <- dens$y * scale_factor
+    offsets <- round(dens$y * scale_factor, 2)
     x_base <- cat_positions[cat]
     left_side <- data.frame(x = x_base - offsets, y = dens$x)
     right_side <- data.frame(x = x_base + offsets, y = dens$x)
@@ -322,7 +322,7 @@ single_violinplot <- function(data, selected_band) {
 
     # Add the violin area (density) series
     hc <- hc %>% hc_add_series(
-      data = highcharter::list_parse2(polygon_points),
+      data = highcharter::list_parse2(round(polygon_points, 2)),
       type = "area",
       name = paste("Violin", cat),
       color = "#7cb5ec",

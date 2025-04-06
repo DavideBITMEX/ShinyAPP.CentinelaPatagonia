@@ -9,23 +9,6 @@
     ]
   },
   "Packages": {
-    "DT": {
-      "Package": "DT",
-      "Version": "0.33",
-      "Source": "Repository",
-      "Repository": "CRAN",
-      "Requirements": [
-        "crosstalk",
-        "htmltools",
-        "htmlwidgets",
-        "httpuv",
-        "jquerylib",
-        "jsonlite",
-        "magrittr",
-        "promises"
-      ],
-      "Hash": "64ff3427f559ce3f2597a4fe13255cb6"
-    },
     "MASS": {
       "Package": "MASS",
       "Version": "7.3-60",
@@ -1810,6 +1793,21 @@
       ],
       "Hash": "c19df082ba346b0ffa6f833e92de34d1"
     },
+    "seewave": {
+      "Package": "seewave",
+      "Version": "2.2.3",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "grDevices",
+        "graphics",
+        "methods",
+        "stats",
+        "tuneR",
+        "utils"
+      ],
+      "Hash": "a134938f0b5c36574c615bdf387e7382"
+    },
     "sessioninfo": {
       "Package": "sessioninfo",
       "Version": "1.2.2",
@@ -1897,6 +1895,21 @@
         "withr"
       ],
       "Hash": "d86406f1e27959c4587c5858314e7cd5"
+    },
+    "signal": {
+      "Package": "signal",
+      "Version": "1.8-1",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "MASS",
+        "R",
+        "grDevices",
+        "graphics",
+        "stats",
+        "utils"
+      ],
+      "Hash": "2f286162ac1320c8e244331368cf9029"
     },
     "sourcetools": {
       "Package": "sourcetools",
@@ -2122,6 +2135,18 @@
         "xfun"
       ],
       "Hash": "0c41a73214d982f539c56a7773c7afa5"
+    },
+    "tuneR": {
+      "Package": "tuneR",
+      "Version": "1.4.7",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R",
+        "methods",
+        "signal"
+      ],
+      "Hash": "e876138830aa7f6b6eb15abfbe5d91fc"
     },
     "urlchecker": {
       "Package": "urlchecker",
