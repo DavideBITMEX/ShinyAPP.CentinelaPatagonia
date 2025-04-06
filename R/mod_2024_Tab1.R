@@ -17,7 +17,7 @@ mod_2024_Tab1_ui <- function(id) {
         align = "center",
         h2(
           "2024 Campaign - Caleta Alaman",
-          style = "border: 3px solid #111184; background-color: #111184; color: white; padding: 15px 20px; border-radius: 10px; display: inline-block;"
+          style = "border: 3px solid #111184; background-color: #111184; color: white; padding: 5px 10px; border-radius: 10px; display: inline-block;"
         )
       )
     )
@@ -53,7 +53,7 @@ mod_2024_Tab1_ui <- function(id) {
         # Octave Band Selector
         selectInput(
           inputId = ns("N_octaveBand"),
-          label = "Select Octave Band to visualize in the Plot:",
+          label = "Select Frequency Band to visualize in the Plot:",
           choices = setNames(
             1:28,
             c("20 Hz", "25 Hz", "31.5 Hz", "40 Hz", "50 Hz", "63 Hz", "80 Hz", "100 Hz",
