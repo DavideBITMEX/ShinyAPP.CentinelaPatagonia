@@ -187,7 +187,12 @@ golem_add_external_resources <- function() {
   )
 
   tags$head(
-    favicon(),
+    favicon(
+      ico = "favicon",
+      rel = "shortcut icon",
+      resources_path = "www",
+      ext = "png"
+    ),
     bundle_resources(
       path = app_sys("app/www"),
       app_title = "ShinyAPP.CentinelaPatagonia"
