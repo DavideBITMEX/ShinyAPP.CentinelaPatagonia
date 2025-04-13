@@ -236,18 +236,23 @@ save("Nov5", "Nov6", "Nov7", "Nov8", "Nov9",
     # Ensure we have a date variable for the random effect:
     data <- data %>% mutate(day = as.Date(date_Local))
 
+    # Optionally, ensure the factor levels are set if needed:
+    # data[[group]] <- factor(data[[group]], levels = c("Day", "Night"))
+
     # Get sorted unique bands (as characters)
     bands <- sort(unique(as.character(data[[band_col]])))
 
-    # Prepare an empty results data frame
+    # Prepare an empty results data frame with additional columns for coefficients
     results <- data.frame(
       Band = character(),
       p_value = numeric(),
       Significant = numeric(),
       Louder = character(),
+      Coef = numeric(),         # non-transformed coefficient
       p_value_log = numeric(),
       Significant_log = numeric(),
       Louder_log = character(),
+      Coef_log = numeric(),     # log-transformed coefficient
       stringsAsFactors = FALSE
     )
 
@@ -260,15 +265,19 @@ save("Nov5", "Nov6", "Nov7", "Nov8", "Nov9",
                    random = ~ 1 | day,
                    data = sub_data)
       summ_model <- summary(model)
+      # Show the model summary
+      print(paste("Summary for band:", b))
+      print(summ_model)
+
       # For a two-level factor, the second row corresponds to the effect of the non-baseline group.
       if(nrow(summ_model$tTable) < 2) next
       p_val <- summ_model$tTable[2, "p-value"]
       estimate <- summ_model$tTable[2, "Value"]
       sig <- ifelse(p_val < 0.05, 1, 0)
+      coef_val <- estimate  # Save non-transformed coefficient
+
       louder <- ""
-      # Here we assume that the baseline is "Day" (i.e. Day is the reference)
-      # so a negative estimate means that Night is lower, hence Day is louder;
-      # a positive estimate implies Night is louder.
+      # Assuming "Day" is the reference:
       if(sig == 1) {
         if(estimate < 0) {
           louder <- "Day"
@@ -286,6 +295,8 @@ save("Nov5", "Nov6", "Nov7", "Nov8", "Nov9",
       p_val_log <- summ_model_log$tTable[2, "p-value"]
       estimate_log <- summ_model_log$tTable[2, "Value"]
       sig_log <- ifelse(p_val_log < 0.05, 1, 0)
+      coef_log <- estimate_log  # Save log-transformed coefficient
+
       louder_log <- ""
       if(sig_log == 1) {
         if(estimate_log < 0) {
@@ -303,9 +314,11 @@ save("Nov5", "Nov6", "Nov7", "Nov8", "Nov9",
           p_value = round(p_val, 4),
           Significant = sig,
           Louder = louder,
+          Coef = round(coef_val, 4),
           p_value_log = round(p_val_log, 4),
           Significant_log = sig_log,
           Louder_log = louder_log,
+          Coef_log = round(coef_log, 4),
           stringsAsFactors = FALSE
         )
       )
@@ -321,6 +334,7 @@ save("Nov5", "Nov6", "Nov7", "Nov8", "Nov9",
     mutate(Band = as.numeric(Band)) %>%
     arrange(Band)
   print(mixedmodel_table)
+
 
 
   mixedMod_sig_vector <- ifelse(mixedmodel_table$Significant == 1, "yes", "no")

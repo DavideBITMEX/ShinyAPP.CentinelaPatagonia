@@ -123,14 +123,18 @@ library(ggplot2)
 library(dplyr)
 
 # Example external significance vector (one per octave band; adjust as needed)
-signif_vector <- c("yes", "no", "yes", "no", "yes", "no", "no", "yes")
+signif_vector <- c("yes", "yes", "yes", "yes", "yes", "yes", "no", "yes", "no", "yes", "yes", "yes", "yes", "yes", "yes", "yes",
+                   "yes", "no", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes", "yes")
 
 # Allow the user to specify which two octave bands to highlight (using the underlying factor levels)
 highlight_bands <- c("3", "6")  # as characters, matching the factor labels
 
 # Define unique bands and custom frequency labels
 unique_bands <- sort(unique(Quemchi2024_NoiseBand_final$octaveBand))  # numeric vector
-CentralFreq <- c("40", "50", "63", "80", "100", "125", "160", "200")
+CentralFreq <- c("20", "25", "31.5", "40", "50", "63", "80", "100",
+                 "125", "160", "200", "250", "315", "400", "500", "630",
+                 "800", "1000", "1250", "1600", "2000", "2500", "3150",
+                 "4000", "5000", "6300", "8000", "10000")
 
 # Create a temporary copy for plotting only, adding a factor version of octaveBand
 plot_data <- Quemchi2024_NoiseBand_final %>%

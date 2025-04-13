@@ -16,7 +16,7 @@ mod_2024_Tab1_ui <- function(id) {
         width = 12,
         align = "center",
         h2(
-          "2024 Campaign - Caleta Alaman",
+          "2024 Campaign - Cermaq salmon farm, Quemchi",
           style = "border: 3px solid #111184; background-color: #111184; color: white; padding: 5px 10px; border-radius: 10px; display: inline-block;"
         )
       )
