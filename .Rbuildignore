@@ -14,3 +14,7 @@ $run_dev.*
 ^rsconnect$
 ^\.rscignore$
 ^\.github$
+^shinylive/
+^site/
+^webr/
+
