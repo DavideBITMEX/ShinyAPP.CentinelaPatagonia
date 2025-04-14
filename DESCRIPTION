@@ -12,7 +12,6 @@ Imports:
     bs4Dash,
     bslib,
     config (>= 0.3.2),
-    curl,
     dplyr,
     fresh,
     ggplot2,
