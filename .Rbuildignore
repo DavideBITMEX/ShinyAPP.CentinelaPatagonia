@@ -1,3 +1,6 @@
+^dev/
+^other_Rscripts/
+^R_ImportScripts/
 ^renv$
 ^renv\.lock$
 ^.*\.Rproj$
