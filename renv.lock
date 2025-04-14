@@ -43,20 +43,15 @@
     },
     "PamBinaries": {
       "Package": "PamBinaries",
-      "Version": "1.9.2",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "PamBinaries",
-      "RemoteUsername": "TaikiSan21",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "4389272c9dec6255f2fc7fe3c8f35b166a5f5eff",
+      "Version": "1.9.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
       "Requirements": [
         "R",
         "dplyr",
         "ggplot2"
       ],
-      "Hash": "70dc481d62eb43ed9c6b4a6fd9ba1786"
+      "Hash": "aac18591388c9803eee31818561dfba7"
     },
     "R6": {
       "Package": "R6",
@@ -670,7 +665,7 @@
     },
     "ggplot2": {
       "Package": "ggplot2",
-      "Version": "3.5.1",
+      "Version": "3.5.2",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -691,7 +686,7 @@
         "vctrs",
         "withr"
       ],
-      "Hash": "44c6a2f8202d5b7e878ea274b1092426"
+      "Hash": "7ad64861e028a777d7d67ff83231b548"
     },
     "gh": {
       "Package": "gh",
@@ -1989,19 +1984,14 @@
     "tablerDash": {
       "Package": "tablerDash",
       "Version": "0.1.5",
-      "Source": "GitHub",
-      "RemoteType": "github",
-      "RemoteHost": "api.github.com",
-      "RemoteRepo": "tablerDash",
-      "RemoteUsername": "RinteRface",
-      "RemoteRef": "HEAD",
-      "RemoteSha": "da4f8faff8a62200723730a47fc8068d323e3980",
+      "Source": "Repository",
+      "Repository": "CRAN",
       "Requirements": [
         "R",
         "htmltools",
         "shiny"
       ],
-      "Hash": "6d0712713d0b66dd681a6d9cf9cfd78c"
+      "Hash": "3bf9e030efee87367d7c7fdd19e73290"
     },
     "terra": {
       "Package": "terra",
