@@ -47,7 +47,7 @@ usethis::use_test("app")
 
 ## Vignette ----
 usethis::use_vignette("ShinyAPP.CentinelaPatagonia")
-devtools::build_vignettes()
+# devtools::build_vignettes()
 
 ## Code Coverage----
 ## Set the code coverage service ("codecov" or "coveralls")

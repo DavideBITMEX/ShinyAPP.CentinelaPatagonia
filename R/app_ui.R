@@ -5,11 +5,6 @@
 #' @import shiny
 #' @noRd
 
-# if (FALSE) {
-#   library(curl)
-#   library(CentinelaPatagonia)  # Your custom package, if needed
-#   # And any other packages that are not auto-detected
-# }
 
 library(golem)
 library(shiny)
